@@ -1,0 +1,530 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ModData">
+      <UniqueIdentifier>{dbf351e2-1c12-4fe1-b4c4-6028ba24ffdd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Map">
+      <UniqueIdentifier>{a536491b-3360-4f15-88ce-9cf3ef42020f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets">
+      <UniqueIdentifier>{b78a6064-490d-49f6-9af3-290d6d9dccc2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Configuration">
+      <UniqueIdentifier>{f0acc2dc-7a66-4c83-8b82-d8db83fea1ff}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Database">
+      <UniqueIdentifier>{053e1262-3b6e-47ec-918e-babeada5a4fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Gameplay">
+      <UniqueIdentifier>{a48ee5f9-2317-435c-8ee8-d07846802c09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Maps">
+      <UniqueIdentifier>{469bc306-2f18-4e8e-a49d-4bbcf742ac57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Core">
+      <UniqueIdentifier>{54ab2fe0-735a-48e0-85e7-fb89b00a347f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Maps\Utility">
+      <UniqueIdentifier>{9818bbd9-da7e-409b-bcea-24a869a3f148}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Maps\EarthMaps">
+      <UniqueIdentifier>{902ce484-1397-43eb-ad12-da5fb40077b2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Maps\BalanceMaps">
+      <UniqueIdentifier>{fd3d3d36-cca7-4a40-9a0a-79e138fbc5c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Gameplay\Schema">
+      <UniqueIdentifier>{036b8c12-5cde-4360-b9fa-10f2c8b8fd3e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Configuration\Schema">
+      <UniqueIdentifier>{dab6d529-9f62-4b6c-a309-66954959b301}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="PerfectWorld6.modinfo">
+      <Filter>ModData</Filter>
+    </None>
+    <None Include="Core\Config_PW6_Maps.sql">
+      <Filter>ModData\Core</Filter>
+    </None>
+    <None Include="Core\Gameplay_PW6_Maps.sql">
+      <Filter>ModData\Core</Filter>
+    </None>
+    <None Include="Core\Gameplay_PW6_Maps_XP2.sql">
+      <Filter>ModData\Core</Filter>
+    </None>
+    <None Include="Map\PerfectWorld6.lua">
+      <Filter>ModData\Map</Filter>
+    </None>
+    <None Include="Assets\Maps\Continents.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Fractal.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\InlandSea.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Island_Plates.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Lakes.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Pangaea.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Seven_Seas.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Shuffle.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Small_Continents.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Terra.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\WBImport.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\WorldBuilderMap.lua">
+      <Filter>ModData\Assets\Maps</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\MapUtilities.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\MountainsCliffs.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\NaturalWonderGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\PlotFiltering.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\ResourceGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\RiversLakes.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\SetDefaultAssignedStartingPlots.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\TerrainGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\AssignStartingPlots.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\FeatureGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\MapEnums.lua">
+      <Filter>ModData\Assets\Maps\Utility</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\MediterraneanLarge.lua">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\TSLEarthStandard.Civ6Map">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\TSLEarthStandard.lua">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\TSLMediterraneanLarge.Civ6Map">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\TSLMediterraneanLarge.lua">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\TSLWorldMapHuge.Civ6Map">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\TSLWorldMapHuge.lua">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\WorldMapHuge.Civ6Map">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\WorldMapHuge.lua">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\EarthStandard.Civ6Map">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\EarthStandard.lua">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\EarthMaps\MediterraneanLarge.Civ6Map">
+      <Filter>ModData\Assets\Maps\EarthMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\BalanceMaps\Balanced6.Civ6Map">
+      <Filter>ModData\Assets\Maps\BalanceMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\BalanceMaps\Mirror.Lua">
+      <Filter>ModData\Assets\Maps\BalanceMaps</Filter>
+    </None>
+    <None Include="Assets\Maps\BalanceMaps\Balanced4.Civ6Map">
+      <Filter>ModData\Assets\Maps\BalanceMaps</Filter>
+    </None>
+    <None Include="Assets\Gameplay\Data\Schema\01_GameplaySchema.sql">
+      <Filter>ModData\Assets\Gameplay\Schema</Filter>
+    </None>
+    <None Include="Assets\Gameplay\Data\Schema\02_AddTriggers.sql">
+      <Filter>ModData\Assets\Gameplay\Schema</Filter>
+    </None>
+    <None Include="Assets\Database\ColorManager.sql">
+      <Filter>ModData\Assets\Database</Filter>
+    </None>
+    <None Include="Assets\Database\IconManager.sql">
+      <Filter>ModData\Assets\Database</Filter>
+    </None>
+    <None Include="Assets\Database\Modding.sql">
+      <Filter>ModData\Assets\Database</Filter>
+    </None>
+    <None Include="Assets\Configuration\Data\Schema\InputConfiguration.sql">
+      <Filter>ModData\Assets\Configuration\Schema</Filter>
+    </None>
+    <None Include="Assets\Configuration\Data\Schema\SetupParameters.sql">
+      <Filter>ModData\Assets\Configuration\Schema</Filter>
+    </None>
+    <None Include="Assets\Configuration\Data\Schema\AdditionalTables.sql">
+      <Filter>ModData\Assets\Configuration\Schema</Filter>
+    </None>
+    <None Include="Assets\Configuration\Data\Schema\HallofFame.sql">
+      <Filter>ModData\Assets\Configuration\Schema</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Core\Localisation_PW6_Maps.xml">
+      <Filter>ModData\Core</Filter>
+    </Xml>
+    <Xml Include="Core\PerfectWorld6Config.xml">
+      <Filter>ModData\Core</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Buildings.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Calendar.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Civics.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\CivilizationInfo.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Civilizations.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Civilopedia.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DealItems.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Difficulties.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_DeclareFriendship.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_DeclareWar.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Defeat.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Delegation.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Denounce.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Embassy.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_FirstMeet.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Greeting.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_KudosAndWarnings.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_MakeAlliance.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_MakeDeal.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_MakeDemand.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_MakePeace.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_NoTarget.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_OpenBorders.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Warning.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\DiplomaticActions.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Districts.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Eras.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Features.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GameCapabilities.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GameEffects.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GameSpeeds.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GlobalParameters.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GoodyHuts.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Gossip.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Governments.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Admirals.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Artists.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Engineers.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Generals.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Merchants.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Musicians.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Prophets.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Scientists.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Writers.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\GreatWorks.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Happinesses.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Improvements.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\LeaderAnimations.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Leaders.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Maps.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Modifiers.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Notifications.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Operations.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Policies.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Projects.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Quests.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Religions.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Requirements.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Resources.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Routes.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Scoring.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Tactics.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Technologies.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Terrains.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\TurnPhases.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\TurnTimers.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\UnitAbilities.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\UnitCommands.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\UnitNames.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\UnitOperations.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\UnitPromotions.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Units.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Victories.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Wars.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\WMDs.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Yields.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Agendas.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Barbarians.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\BehaviorTrees.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Beliefs.xml">
+      <Filter>ModData\Assets\Gameplay</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Schema\Color_Tables.xml">
+      <Filter>ModData\Assets\Gameplay\Schema</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Schema\Diplomacy_Tables.xml">
+      <Filter>ModData\Assets\Gameplay\Schema</Filter>
+    </Xml>
+    <Xml Include="Assets\Gameplay\Data\Schema\Leader_Tables.xml">
+      <Filter>ModData\Assets\Gameplay\Schema</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\Eras.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\FrontiersPack.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\GameSpeeds.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\HallofFame.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\InputConfiguration.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\MapSettings.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\MapSizes.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\NaturalWonders.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\Players.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\Rulesets.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\SetupParameters.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\StandardMaps.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\TurnPhases.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\TurnTimers.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\Victories.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\BalanceMaps.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\CityStates.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\Difficulties.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+    <Xml Include="Assets\Configuration\Data\EarthMaps.xml">
+      <Filter>ModData\Assets\Configuration</Filter>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PerfectOptWorld6.h" />
+    <ClInclude Include="typedefs.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="PerfectOptWorld6.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+</Project>

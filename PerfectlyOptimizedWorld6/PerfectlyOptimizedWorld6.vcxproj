@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{283e6231-0c1b-43c9-af64-4523969c4fc2}</ProjectGuid>
+    <RootNamespace>PerfectlyOptimizedWorld6</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="Assets\Configuration\Data\Schema\AdditionalTables.sql" />
+    <None Include="Assets\Configuration\Data\Schema\HallofFame.sql" />
+    <None Include="Assets\Configuration\Data\Schema\InputConfiguration.sql" />
+    <None Include="Assets\Configuration\Data\Schema\SetupParameters.sql" />
+    <None Include="Assets\Database\ColorManager.sql" />
+    <None Include="Assets\Database\IconManager.sql" />
+    <None Include="Assets\Database\Modding.sql" />
+    <None Include="Assets\Gameplay\Data\Schema\01_GameplaySchema.sql" />
+    <None Include="Assets\Gameplay\Data\Schema\02_AddTriggers.sql" />
+    <None Include="Assets\Maps\BalanceMaps\Balanced4.Civ6Map" />
+    <None Include="Assets\Maps\BalanceMaps\Balanced6.Civ6Map" />
+    <None Include="Assets\Maps\BalanceMaps\Mirror.Lua" />
+    <None Include="Assets\Maps\Continents.lua" />
+    <None Include="Assets\Maps\EarthMaps\EarthStandard.Civ6Map" />
+    <None Include="Assets\Maps\EarthMaps\EarthStandard.lua" />
+    <None Include="Assets\Maps\EarthMaps\MediterraneanLarge.Civ6Map" />
+    <None Include="Assets\Maps\EarthMaps\MediterraneanLarge.lua" />
+    <None Include="Assets\Maps\EarthMaps\TSLEarthStandard.Civ6Map" />
+    <None Include="Assets\Maps\EarthMaps\TSLEarthStandard.lua" />
+    <None Include="Assets\Maps\EarthMaps\TSLMediterraneanLarge.Civ6Map" />
+    <None Include="Assets\Maps\EarthMaps\TSLMediterraneanLarge.lua" />
+    <None Include="Assets\Maps\EarthMaps\TSLWorldMapHuge.Civ6Map" />
+    <None Include="Assets\Maps\EarthMaps\TSLWorldMapHuge.lua" />
+    <None Include="Assets\Maps\EarthMaps\WorldMapHuge.Civ6Map" />
+    <None Include="Assets\Maps\EarthMaps\WorldMapHuge.lua" />
+    <None Include="Assets\Maps\Fractal.lua" />
+    <None Include="Assets\Maps\InlandSea.lua" />
+    <None Include="Assets\Maps\Island_Plates.lua" />
+    <None Include="Assets\Maps\Lakes.lua" />
+    <None Include="Assets\Maps\Pangaea.lua" />
+    <None Include="Assets\Maps\Seven_Seas.lua" />
+    <None Include="Assets\Maps\Shuffle.lua" />
+    <None Include="Assets\Maps\Small_Continents.lua" />
+    <None Include="Assets\Maps\Terra.lua" />
+    <None Include="Assets\Maps\Utility\AssignStartingPlots.lua" />
+    <None Include="Assets\Maps\Utility\FeatureGenerator.lua" />
+    <None Include="Assets\Maps\Utility\MapEnums.lua" />
+    <None Include="Assets\Maps\Utility\MapUtilities.lua" />
+    <None Include="Assets\Maps\Utility\MountainsCliffs.lua" />
+    <None Include="Assets\Maps\Utility\NaturalWonderGenerator.lua" />
+    <None Include="Assets\Maps\Utility\PlotFiltering.lua" />
+    <None Include="Assets\Maps\Utility\ResourceGenerator.lua" />
+    <None Include="Assets\Maps\Utility\RiversLakes.lua" />
+    <None Include="Assets\Maps\Utility\SetDefaultAssignedStartingPlots.lua" />
+    <None Include="Assets\Maps\Utility\TerrainGenerator.lua" />
+    <None Include="Assets\Maps\WBImport.lua" />
+    <None Include="Assets\Maps\WorldBuilderMap.lua" />
+    <None Include="Core\Config_PW6_Maps.sql" />
+    <None Include="Core\Gameplay_PW6_Maps.sql" />
+    <None Include="Core\Gameplay_PW6_Maps_XP2.sql" />
+    <None Include="Map\PerfectWorld6.lua" />
+    <None Include="PerfectWorld6.modinfo" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Assets\Configuration\Data\BalanceMaps.xml" />
+    <Xml Include="Assets\Configuration\Data\CityStates.xml" />
+    <Xml Include="Assets\Configuration\Data\Difficulties.xml" />
+    <Xml Include="Assets\Configuration\Data\EarthMaps.xml" />
+    <Xml Include="Assets\Configuration\Data\Eras.xml" />
+    <Xml Include="Assets\Configuration\Data\FrontiersPack.xml" />
+    <Xml Include="Assets\Configuration\Data\GameSpeeds.xml" />
+    <Xml Include="Assets\Configuration\Data\HallofFame.xml" />
+    <Xml Include="Assets\Configuration\Data\InputConfiguration.xml" />
+    <Xml Include="Assets\Configuration\Data\MapSettings.xml" />
+    <Xml Include="Assets\Configuration\Data\MapSizes.xml" />
+    <Xml Include="Assets\Configuration\Data\NaturalWonders.xml" />
+    <Xml Include="Assets\Configuration\Data\Players.xml" />
+    <Xml Include="Assets\Configuration\Data\Rulesets.xml" />
+    <Xml Include="Assets\Configuration\Data\SetupParameters.xml" />
+    <Xml Include="Assets\Configuration\Data\StandardMaps.xml" />
+    <Xml Include="Assets\Configuration\Data\TurnPhases.xml" />
+    <Xml Include="Assets\Configuration\Data\TurnTimers.xml" />
+    <Xml Include="Assets\Configuration\Data\Victories.xml" />
+    <Xml Include="Assets\Gameplay\Data\Agendas.xml" />
+    <Xml Include="Assets\Gameplay\Data\Barbarians.xml" />
+    <Xml Include="Assets\Gameplay\Data\BehaviorTrees.xml" />
+    <Xml Include="Assets\Gameplay\Data\Beliefs.xml" />
+    <Xml Include="Assets\Gameplay\Data\Buildings.xml" />
+    <Xml Include="Assets\Gameplay\Data\Calendar.xml" />
+    <Xml Include="Assets\Gameplay\Data\Civics.xml" />
+    <Xml Include="Assets\Gameplay\Data\CivilizationInfo.xml" />
+    <Xml Include="Assets\Gameplay\Data\Civilizations.xml" />
+    <Xml Include="Assets\Gameplay\Data\Civilopedia.xml" />
+    <Xml Include="Assets\Gameplay\Data\DealItems.xml" />
+    <Xml Include="Assets\Gameplay\Data\Difficulties.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_DeclareFriendship.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_DeclareWar.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Defeat.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Delegation.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Denounce.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Embassy.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_FirstMeet.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Greeting.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_KudosAndWarnings.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_MakeAlliance.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_MakeDeal.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_MakeDemand.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_MakePeace.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_NoTarget.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_OpenBorders.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomacyStatements_Warning.xml" />
+    <Xml Include="Assets\Gameplay\Data\DiplomaticActions.xml" />
+    <Xml Include="Assets\Gameplay\Data\Districts.xml" />
+    <Xml Include="Assets\Gameplay\Data\Eras.xml" />
+    <Xml Include="Assets\Gameplay\Data\Features.xml" />
+    <Xml Include="Assets\Gameplay\Data\GameCapabilities.xml" />
+    <Xml Include="Assets\Gameplay\Data\GameEffects.xml" />
+    <Xml Include="Assets\Gameplay\Data\GameSpeeds.xml" />
+    <Xml Include="Assets\Gameplay\Data\GlobalParameters.xml" />
+    <Xml Include="Assets\Gameplay\Data\GoodyHuts.xml" />
+    <Xml Include="Assets\Gameplay\Data\Gossip.xml" />
+    <Xml Include="Assets\Gameplay\Data\Governments.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Admirals.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Artists.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Engineers.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Generals.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Merchants.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Musicians.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Prophets.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Scientists.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatPeople_Writers.xml" />
+    <Xml Include="Assets\Gameplay\Data\GreatWorks.xml" />
+    <Xml Include="Assets\Gameplay\Data\Happinesses.xml" />
+    <Xml Include="Assets\Gameplay\Data\Improvements.xml" />
+    <Xml Include="Assets\Gameplay\Data\LeaderAnimations.xml" />
+    <Xml Include="Assets\Gameplay\Data\Leaders.xml" />
+    <Xml Include="Assets\Gameplay\Data\Maps.xml" />
+    <Xml Include="Assets\Gameplay\Data\Modifiers.xml" />
+    <Xml Include="Assets\Gameplay\Data\Notifications.xml" />
+    <Xml Include="Assets\Gameplay\Data\Operations.xml" />
+    <Xml Include="Assets\Gameplay\Data\Policies.xml" />
+    <Xml Include="Assets\Gameplay\Data\Projects.xml" />
+    <Xml Include="Assets\Gameplay\Data\Quests.xml" />
+    <Xml Include="Assets\Gameplay\Data\Religions.xml" />
+    <Xml Include="Assets\Gameplay\Data\Requirements.xml" />
+    <Xml Include="Assets\Gameplay\Data\Resources.xml" />
+    <Xml Include="Assets\Gameplay\Data\Routes.xml" />
+    <Xml Include="Assets\Gameplay\Data\Schema\Color_Tables.xml" />
+    <Xml Include="Assets\Gameplay\Data\Schema\Diplomacy_Tables.xml" />
+    <Xml Include="Assets\Gameplay\Data\Schema\Leader_Tables.xml" />
+    <Xml Include="Assets\Gameplay\Data\Scoring.xml" />
+    <Xml Include="Assets\Gameplay\Data\Tactics.xml" />
+    <Xml Include="Assets\Gameplay\Data\Technologies.xml" />
+    <Xml Include="Assets\Gameplay\Data\Terrains.xml" />
+    <Xml Include="Assets\Gameplay\Data\TurnPhases.xml" />
+    <Xml Include="Assets\Gameplay\Data\TurnTimers.xml" />
+    <Xml Include="Assets\Gameplay\Data\UnitAbilities.xml" />
+    <Xml Include="Assets\Gameplay\Data\UnitCommands.xml" />
+    <Xml Include="Assets\Gameplay\Data\UnitNames.xml" />
+    <Xml Include="Assets\Gameplay\Data\UnitOperations.xml" />
+    <Xml Include="Assets\Gameplay\Data\UnitPromotions.xml" />
+    <Xml Include="Assets\Gameplay\Data\Units.xml" />
+    <Xml Include="Assets\Gameplay\Data\Victories.xml" />
+    <Xml Include="Assets\Gameplay\Data\Wars.xml" />
+    <Xml Include="Assets\Gameplay\Data\WMDs.xml" />
+    <Xml Include="Assets\Gameplay\Data\Yields.xml" />
+    <Xml Include="Core\Localisation_PW6_Maps.xml" />
+    <Xml Include="Core\PerfectWorld6Config.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="PerfectOptWorld6.h" />
+    <ClInclude Include="typedefs.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="PerfectOptWorld6.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
