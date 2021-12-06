@@ -54,7 +54,7 @@ struct PW6Settings
     float32 riverPercent = 0.55f;
 
     // Minumum river length measured in hex sides. Shorter rivers that are not lake outflows will be culled.
-    int32 minRiverLength = 5;
+    uint32 minRiverLength = 5;
 
     // This is the percent of rivers that have floodplains that flood largest rivers always have priority for floodability
     float32 percentRiversFloodplains = 0.25f;

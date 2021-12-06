@@ -9,3 +9,5 @@ typedef unsigned short uint16;
 typedef unsigned       uint32;
 typedef float          float32;
 typedef double         float64;
+
+#define STATIC_ASSERT(expr) typedef char __static_assert_t[(expr) != 0]
