@@ -1,16 +1,17 @@
 #include "PerfectOptWorld6.h"
 
+#define _USE_MATH_DEFINES
+#include <cmath>
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <algorithm>
 #include <vector>
 
-#define _USE_MATH_DEFINES
-#include <math.h>
-
 #include "MapEnums.h"
 
+#pragma warning( disable : 6011 6387 26451 )
 
 // --- Data Types -------------------------------------------------------------
 
@@ -37,10 +38,10 @@ struct FloatMap
     float64* data = nullptr;
 
     // TODO: check member size
-    uint32 rectX;
-    uint32 rectY;
-    uint32 rectWidth;
-    uint32 rectHeight;
+    uint16 rectX;
+    uint16 rectY;
+    uint16 rectWidth;
+    uint16 rectHeight;
 };
 
 struct ElevationMap
@@ -95,7 +96,7 @@ struct RiverHex
     RiverJunction northJunction;
     RiverJunction southJunction;
     uint32 lakeID;
-    uint32 rainfall;
+    float64 rainfall;
 };
 
 struct River
@@ -103,6 +104,26 @@ struct River
     RiverJunction* sourceJunc;
     uint32 riverID;
     std::vector<RiverJunction*> junctions;
+};
+
+struct RiverMap
+{
+    ElevationMap* eMap;
+
+    RiverHex* riverData;
+    River* rivers;
+    uint32 riverCnt;
+    float64 riverThreshold;
+};
+
+typedef bool (*Match)(Coord);
+
+struct LakeDataUtil
+{
+    uint32 lakesToAdd;
+    uint32 lakesAdded;
+    uint32 currentLakeID;
+    uint32 currentLakeSize;
 };
 
 
@@ -265,6 +286,32 @@ PW6Settings gSettings;
 MapTile gMap[200000];
 
 
+// --- Forward Declarations ---------------------------------------------------
+
+uint32 GetRectIndex(FloatMap* map, Coord coord);
+bool IsOnMap(FloatMap* map, Coord c);
+void InitPWArea(PWArea* area, uint32 ind, Coord c, bool trueMatch);
+void InitLineSeg(LineSeg* seg, uint16 y, uint16 xLeft, uint16 xRight, int16 dy);
+void FillArea(PWAreaMap* map, Coord c, PWArea* area, Match mFunc);
+void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, Match mFunc);
+uint16 ValidateY(PWAreaMap* map, uint16 y);
+uint16 ValidateX(PWAreaMap* map, uint16 x);
+void InitRiverHex(RiverHex* hex, Coord c);
+bool ValidLakeHex(RiverMap* map, RiverHex* lakeHex, LakeDataUtil* ldu);
+uint32 GetRandomLakeSize(RiverMap* map);
+void GrowLake(RiverMap* map, RiverHex* lakeHex, uint32 lakeSize, LakeDataUtil* ldu,
+    std::vector<RiverHex*>& lakeList, std::vector<RiverHex*>& growthQueue);
+RiverJunction* GetLowestJunctionAroundHex(RiverMap* map, RiverHex* lakeHex);
+std::vector<FlowDir> GetValidFlows(RiverMap* map, RiverJunction* junc);
+void SetOutflowForLakeHex(RiverMap* map, RiverHex* lakeHex, RiverJunction* outflow);
+std::vector<uint32> GetRadiusAroundCell(Coord c);
+RiverJunction* GetNextJunctionInFlow(RiverMap* map, RiverJunction* junc);
+void InitRiver(River* river, RiverJunction* sourceJunc, uint32 rawID);
+void Add(River* river, RiverJunction* junc);
+void AddParent(RiverJunction* junc, RiverJunction* parent);
+void InitRiverJunction(RiverJunction* junc, Coord c, bool isNorth);
+float64 GetAttenuationFactor(FloatMap* map, float64 val, Coord c);
+
 
 // --- Util Functions ---------------------------------------------------------
 
@@ -273,9 +320,9 @@ static Dir FlipDir(Dir dir)
     return (Dir)((dir + 3) % 6);
 }
 
-static float32 BellCurve(float32 value)
+static float64 BellCurve(float64 value)
 {
-    return sin(value * M_PI * 2.0f - M_PI_2) * 0.5f + 0.5f;
+    return sin(value * M_PI * 2.0 - M_PI_2) * 0.5 + 0.5;
 }
 
 static float64 PWRandSeed(uint32 fixed_seed = 0)
@@ -285,9 +332,9 @@ static float64 PWRandSeed(uint32 fixed_seed = 0)
     if (seed == 0)
     {
         seed = rand() % 256;
-        seed = seed << 8 + rand() % 256;
-        seed = seed << 8 + rand() % 256;
-        seed = seed << 4 + rand() % 256;
+        seed = (seed << 8) + (rand() % 256);
+        seed = (seed << 8) + (rand() % 256);
+        seed = (seed << 4) + (rand() % 256);
     }
 
     printf("Random seed for this map is: %i\n", seed);
@@ -299,7 +346,7 @@ static float64 PWRand()
     return rand() / (float64)RAND_MAX;
 }
 
-static float64 PWRandInt(int32 min, int32 max)
+static int32 PWRandInt(int32 min, int32 max)
 {
     assert(max - min <= RAND_MAX);
     return (rand() % ((max+1) - min)) + min;
@@ -437,8 +484,8 @@ float64 GetPerlinNoise(float64 x, float64 y, uint16 destMapWidth, float64 destMa
         // TODO: clean up branching
         if (noiseMap->wrapX)
         {
-            noiseMap->rectX = floor(noiseMap->dim.w / 2 - (destMapWidth * freq) / 2);
-            noiseMap->rectWidth = std::max(floor(destMapWidth * freq), 1.0);
+            noiseMap->rectX = (uint32)floor(noiseMap->dim.w / 2 - (destMapWidth * freq) / 2);
+            noiseMap->rectWidth = (uint32)std::max(floor(destMapWidth * freq), 1.0);
             freqX = noiseMap->rectWidth / destMapWidth;
         }
         else
@@ -450,8 +497,8 @@ float64 GetPerlinNoise(float64 x, float64 y, uint16 destMapWidth, float64 destMa
 
         if (noiseMap->wrapY)
         {
-            noiseMap->rectY = floor(noiseMap->dim.h / 2 - (destMapHeight * freq) / 2);
-            noiseMap->rectHeight = std::max(floor(destMapHeight * freq), 1.0);
+            noiseMap->rectY = (uint32)floor(noiseMap->dim.h / 2 - (destMapHeight * freq) / 2);
+            noiseMap->rectHeight = (uint32)std::max(floor(destMapHeight * freq), 1.0);
             freqY = noiseMap->rectHeight / destMapHeight;
         }
         else
@@ -487,8 +534,8 @@ float64 GetPerlinDerivative(float64 x, float64 y, uint16 destMapWidth, float64 d
         // TODO: clean up branching
         if (noiseMap->wrapX)
         {
-            noiseMap->rectX = floor(noiseMap->dim.w / 2 - (destMapWidth * freq) / 2);
-            noiseMap->rectWidth = floor(destMapWidth * freq);
+            noiseMap->rectX = (uint32)floor(noiseMap->dim.w / 2 - (destMapWidth * freq) / 2);
+            noiseMap->rectWidth = (uint32)floor(destMapWidth * freq);
             freqX = noiseMap->rectWidth / destMapWidth;
         }
         else
@@ -500,8 +547,8 @@ float64 GetPerlinDerivative(float64 x, float64 y, uint16 destMapWidth, float64 d
 
         if (noiseMap->wrapY)
         {
-            noiseMap->rectY = floor(noiseMap->dim.h / 2 - (destMapHeight * freq) / 2);
-            noiseMap->rectHeight = floor(destMapHeight * freq);
+            noiseMap->rectY = (uint32)floor(noiseMap->dim.h / 2 - (destMapHeight * freq) / 2);
+            noiseMap->rectHeight = (uint32)floor(destMapHeight * freq);
             freqY = noiseMap->rectHeight / destMapHeight;
         }
         else
@@ -532,14 +579,13 @@ inline bool IsWater(MapTile* tile)
 
 // --- FloatMap
 
-void InitFloatMap(FloatMap * map, uint16 width, uint16 height, bool wrapX, bool wrapY)
+void InitFloatMap(FloatMap * map, Dim dim, bool wrapX, bool wrapY)
 {
     assert(map);
     assert(!map->data);
 
-    map->dim.w = width;
-    map->dim.h = height;
-    map->length = width * height;
+    map->dim = dim;
+    map->length = dim.w * dim.h;
     map->wrapX = wrapX;
     map->wrapY = wrapY;
 
@@ -548,8 +594,8 @@ void InitFloatMap(FloatMap * map, uint16 width, uint16 height, bool wrapX, bool 
     // TODO: check member size
     map->rectX = 0;
     map->rectY = 0;
-    map->rectWidth = width;
-    map->rectHeight = height;
+    map->rectWidth = dim.w;
+    map->rectHeight = dim.h;
 }
 
 void ExitFloatMap(FloatMap* map)
@@ -623,7 +669,7 @@ uint32 GetIndex(FloatMap* map, Coord coord)
 // TODO: Don't use
 Coord GetXYFromIndex(FloatMap* map, uint32 ind)
 {
-    return { ind % map->dim.w, ind / map->dim.w };
+    return { (uint16)(ind % map->dim.w), (uint16)(ind / map->dim.w) };
 }
 
 // quadrants are labeled
@@ -653,10 +699,10 @@ Quadrant GetQuadrant(FloatMap* map, Coord coord)
 // Wrapping is assumed in both directions
 uint32 GetRectIndex(FloatMap* map, Coord coord)
 {
-    Coord coord = { map->rectX + (coord.x % map->rectWidth),
-                    map->rectY + (coord.y % map->rectHeight) };
+    Coord c = { (uint16)(map->rectX + (coord.x % map->rectWidth)),
+                (uint16)(map->rectY + (coord.y % map->rectHeight)) };
 
-    return GetIndex(map, coord);
+    return GetIndex(map, c);
 }
 
 void Normalize(FloatMap* map)
@@ -710,7 +756,7 @@ float64 FindThresholdFromPercent(FloatMap* map, float64 percent, bool excludeZer
 {
     // TODO: very small scope testing function, so this should be acceptable
     // ideally we wouldn't allocate at all though
-    float64* maplist = (float64 *)alloca(map->length * sizeof(float64));
+    float64* maplist = (float64 *)malloc(map->length * sizeof(float64));
 
     // The far majority of cases shouldn't fulfill this
     // if it is truly necessary it can be re-added, but we are in full control here
@@ -743,6 +789,7 @@ float64 FindThresholdFromPercent(FloatMap* map, float64 percent, bool excludeZer
     std::sort(maplist, maplist + size);
     // storing the value locally to prevent potential issues with alloca
     float64 retval = maplist[(uint32)(size * percent)];
+    free(maplist);
     return retval;
 }
 
@@ -755,7 +802,7 @@ float64 GetLatitudeForY(FloatMap* map, PW6Settings* settings, uint16 y)
 uint16 GetYForLatitude(FloatMap* map, PW6Settings* settings, float64 lat)
 {
     int32 range = settings->topLatitude - settings->bottomLatitude;
-    return floor((((lat - settings->bottomLatitude) / range) * map->dim.h) + 0.5);
+    return (uint16)floor((((lat - settings->bottomLatitude) / range) * map->dim.h) + 0.5);
 }
 
 WindZone GetZone(FloatMap* map, PW6Settings* settings, uint16 y)
@@ -798,6 +845,8 @@ uint16 GetYFromZone(FloatMap* map, PW6Settings* settings, WindZone zone, bool bT
             if (GetZone(map, settings, y) == zone)
                 return y;
     }
+
+    return UINT16_MAX;
 }
 
 std::pair<Dir, Dir> GetGeostrophicWindDirections(WindZone zone)
@@ -1058,7 +1107,8 @@ bool IsOnMap(FloatMap* map, Coord c)
 // TODO: test
 void Save(FloatMap* map)
 {
-    FILE* fp = fopen("map_data.csv", "w");
+    FILE* fp;
+    fopen_s(&fp, "map_data.csv", "w");
 
     if (fp)
     {
@@ -1075,9 +1125,9 @@ void Save(FloatMap* map)
 
 // --- ElevationMap
 
-void InitElevationMap(ElevationMap* map, uint32 width, uint32 height, bool xWrap, bool yWrap)
+void InitElevationMap(ElevationMap* map, Dim dim, bool xWrap, bool yWrap)
 {
-    InitFloatMap(&map->base, width, height, xWrap, yWrap);
+    InitFloatMap(&map->base, dim, xWrap, yWrap);
 
     map->seaLevelThreshold = 0.0;
 }
@@ -1090,9 +1140,9 @@ bool IsBelowSeaLevel(ElevationMap* map, Coord c)
 
 // --- AreaMap
 
-void InitPWAreaMap(PWAreaMap* map, uint32 width, uint32 height, bool xWrap, bool yWrap)
+void InitPWAreaMap(PWAreaMap* map, Dim dim, bool xWrap, bool yWrap)
 {
-    InitFloatMap(&map->base, width, height, xWrap, yWrap);
+    InitFloatMap(&map->base, dim, xWrap, yWrap);
 
     map->areaList = NULL;
 }
@@ -1108,8 +1158,6 @@ void Clear(PWAreaMap* map)
 {
     memset(map->base.data, 0, map->base.length * sizeof(float64));
 }
-
-typedef bool (*Match)(Coord);
 
 void DefineAreas(PWAreaMap* map, Match mFunc, bool bDebug)
 {
@@ -1325,7 +1373,7 @@ void debugPrint(PWArea* area, char const* str)
 
 // --- LineSeg
 
-void InitLineSeg(LineSeg* seg, uint16 y, uint16 xLeft, uint16 xRight, float64 dy)
+void InitLineSeg(LineSeg* seg, uint16 y, uint16 xLeft, uint16 xRight, int16 dy)
 {
     seg->y = y;
     seg->xLeft = xLeft;
@@ -1335,16 +1383,6 @@ void InitLineSeg(LineSeg* seg, uint16 y, uint16 xLeft, uint16 xRight, float64 dy
 
 
 // --- RiverMap
-
-struct RiverMap
-{
-    ElevationMap* eMap;
-
-    RiverHex * riverData;
-    River * rivers;
-    uint32 riverCnt;
-    float64 riverThreshold;
-};
 
 void InitRiverMap(RiverMap* map, ElevationMap * elevMap)
 {
@@ -1429,21 +1467,21 @@ uint8 GetJunctionsAroundHex(RiverMap* map, RiverHex* hex, RiverJunction* out[6])
         ++ind;
     }
 
-    RiverJunction* junc = GetJunctionNeighbor(map, fdEast, &hex->northJunction);
+    junc = GetJunctionNeighbor(map, fdEast, &hex->northJunction);
     if (junc)
     {
         out[ind] = junc;
         ++ind;
     }
 
-    RiverJunction* junc = GetJunctionNeighbor(map, fdWest, &hex->southJunction);
+    junc = GetJunctionNeighbor(map, fdWest, &hex->southJunction);
     if (junc)
     {
         out[ind] = junc;
         ++ind;
     }
 
-    RiverJunction* junc = GetJunctionNeighbor(map, fdEast, &hex->southJunction);
+    junc = GetJunctionNeighbor(map, fdEast, &hex->southJunction);
     if (junc)
     {
         out[ind] = junc;
@@ -1605,7 +1643,7 @@ void SiltifyLakes(RiverMap* map)
             *southIns = false;
     }
 
-    uint32 numLakes = lakeIns - lakeList;
+    uint32 numLakes = (uint32)(lakeIns - lakeList);
     --lakeIns;
 
     uint32 iter = 0;
@@ -1663,20 +1701,12 @@ void SiltifyLakes(RiverMap* map)
     free(onQueueMapSouth);
 }
 
-struct LakeDataUtil
-{
-    uint32 lakesToAdd;
-    uint32 lakesAdded;
-    uint32 currentLakeID;
-    uint32 currentLakeSize;
-};
-
 float64* rainfallMap; // TODO: move
 
 void RecreateNewLakes(RiverMap* map, PW6Settings * settings)
 {
     LakeDataUtil ldu;
-    ldu.lakesToAdd = map->eMap->base.length * settings->landPercent * settings->lakePercent;
+    ldu.lakesToAdd = (uint32)(map->eMap->base.length * settings->landPercent * settings->lakePercent);
     ldu.lakesAdded = 0;
     ldu.currentLakeID = 1;
 
@@ -1700,7 +1730,7 @@ void RecreateNewLakes(RiverMap* map, PW6Settings * settings)
 
     std::sort(riverHexList, riverHexIns, [](RiverHex* a, RiverHex* b) { return a->rainfall > b->rainfall; });
 
-    uint32 rListSize = riverHexIns - riverHexList;
+    uint32 rListSize = (uint32)(riverHexIns - riverHexList);
     uint32 portion = rListSize / 4u; // dividing ints automatically floors
     riverHexIns -= portion;
 
@@ -1742,7 +1772,7 @@ void RecreateNewLakes(RiverMap* map, PW6Settings * settings)
                 lowestJunction->flow = dirs.front();
             else
             {
-                printf("ERROR - Bad assumption made. Lake outflow has %d valid flows", dirs.size());
+                printf("ERROR - Bad assumption made. Lake outflow has %llu valid flows", dirs.size());
             }
             // then update all junctions with outflow
             for (RiverHex* thisLake : lakeList)
@@ -1882,7 +1912,7 @@ static uint32 GetJuncData(RiverMap* map, RiverJunction*** out)
         ++juncIns;
     }
 
-    return juncIns - *out;
+    return (uint32)(juncIns - *out);
 }
 
 void SetFlowDestinations(RiverMap* map)
@@ -1910,7 +1940,7 @@ void SetFlowDestinations(RiverMap* map)
                 junction->flow = fdNone;
             else
             {
-                uint32 choice = PWRandInt(0, validList.size() - 1);
+                uint32 choice = PWRandInt(0, (int32)(validList.size() - 1));
                 junction->flow = validList[choice];
                 ++validFlowCount;
             }
@@ -1974,7 +2004,7 @@ static uint32 GetFilteredJuncData(RiverMap* map, RiverJunction*** out)
         }
     }
 
-    return juncIns - *out;
+    return (uint32)(juncIns - *out);
 }
 
 void SetRiverSizes(RiverMap* map, PW6Settings* settings, float64 * locRainfallMap)
@@ -2025,10 +2055,10 @@ void SetRiverSizes(RiverMap* map, PW6Settings* settings, float64 * locRainfallMa
     }
 
     // now sort by river size to find river threshold
-    RiverJunction** it = junctionList;
+    it = junctionList;
     std::sort(it, end, [](RiverJunction* a, RiverJunction* b) { return a->size > b->size; });
 
-    uint32 riverIndex = floor(settings->riverPercent * size);
+    uint32 riverIndex = (uint32)(floor(settings->riverPercent * size));
     map->riverThreshold = junctionList[riverIndex]->size;
 
     free(junctionList);
@@ -2069,6 +2099,13 @@ bool IsRiverSource(RiverMap* map, RiverJunction* junc)
         return false;
 
     // no big rivers flowing into me, so I must be a source
+    return true;
+}
+
+bool NotLongEnough(River& river)
+{
+    if (river.junctions.size() >= gSettings.minRiverLength || river.sourceJunc->isOutflow)
+        return false;
     return true;
 }
 
@@ -2179,16 +2216,9 @@ void CreateRiverList(RiverMap* map)
 
     // now strip out all the shorties
     if (gSettings.minRiverLength)
-        map->riverCnt = std::remove_if(map->rivers, rEnd, NotLongEnough) - map->rivers;
+        map->riverCnt = (uint32)(std::remove_if(map->rivers, rEnd, NotLongEnough) - map->rivers);
     else
-        map->riverCnt = rEnd - map->rivers;
-}
-
-bool NotLongEnough(River * river)
-{
-    if (river->junctions.size() >= gSettings.minRiverLength || river->sourceJunc->isOutflow)
-        return false;
-    return true;
+        map->riverCnt = (uint32)(rEnd - map->rivers);
 }
 
 void AssignRiverIDs(RiverMap* map)
@@ -2196,7 +2226,8 @@ void AssignRiverIDs(RiverMap* map)
     // sort river list by largest first
     River* it = map->rivers;
     River* end = it + map->riverCnt;
-    std::sort(map->rivers, end, [](River* a, River* b) { return a->junctions.size() > b->junctions.size(); });
+    // TODO: don't think this will work properly w/o proper constructors
+    std::sort(map->rivers, end, [](River& a, River& b) { return a.junctions.size() > b.junctions.size(); });
 
     // this should closely match river index witch should be id+1
     uint32 currentRiverID = 0;
@@ -2328,11 +2359,11 @@ FlowDirRet GetFlowDirections(RiverMap* map, Coord c)
     uint32 NEIDLength = 0;
 
     if (WID != UINT32_MAX)
-        WIDLength = map->rivers[WID].junctions.size();
+        WIDLength = (uint32)map->rivers[WID].junctions.size();
     if (NWID != UINT32_MAX)
-        NWIDLength = map->rivers[NWID].junctions.size();
+        NWIDLength = (uint32)map->rivers[NWID].junctions.size();
     if (NEID != UINT32_MAX)
-        NEIDLength = map->rivers[NEID].junctions.size();
+        NEIDLength = (uint32)map->rivers[NEID].junctions.size();
 
     // fight between WID and NWID
     if (WIDLength >= NWIDLength && WIDLength >= NEIDLength)
@@ -2385,8 +2416,8 @@ void AddParent(RiverJunction* junc, RiverJunction* parent)
 void PrintRiverJunction(RiverJunction* junc)
 {
     char const* flowStr[] = { "NONE", "WEST", "EAST", "VERT"};
-    printf("junction at %d, %d isNorth=%d, flow=%s, size=%f, submerged=%d, outflow=%x, isOutflow=%d riverID = %d",
-        junc->coord.x, junc->coord.y, junc->isNorth, flowStr[junc->flow], junc->size, junc->submerged, junc->outflow, junc->isOutflow, junc->id);
+    printf("junction at %d, %d isNorth=%d, flow=%s, size=%f, submerged=%d, outflow=%llx, isOutflow=%d riverID = %d",
+        junc->coord.x, junc->coord.y, junc->isNorth, flowStr[junc->flow], junc->size, junc->submerged, (uint64)junc->outflow, junc->isOutflow, junc->id);
 }
 
 
@@ -2409,7 +2440,7 @@ void Add(River* river, RiverJunction* junc)
 
 uint32 GetLength(River* river)
 {
-    return river->junctions.size();
+    return (uint32)river->junctions.size();
 }
 
 
@@ -2418,12 +2449,174 @@ uint32 GetLength(River* river)
 void CountLand() {}
 void GenerateMap() {}
 
-void GenerateTwistedPerlinMap() {}
-void ArrayRemove(River * it, River * end, bool (*fn)(RiverMap* map, River* riverList, uint32 i)) {}
-void ShuffleList(void** beg, void** end) {}
-void GenerateMountainMap() {}
+void GenerateTwistedPerlinMap(Dim dim, bool xWrap, bool yWrap,
+    float64 minFreq, float64 maxFreq, float64 varFreq,
+    FloatMap* out)
+{
+    FloatMap inputNoise;
+    InitFloatMap(&inputNoise, dim, xWrap, yWrap);
+    GenerateNoise(&inputNoise);
+    Normalize(&inputNoise);
+
+    FloatMap freqMap;
+    InitFloatMap(&freqMap, dim, xWrap, yWrap);
+
+    float64* ins = freqMap.data;
+    Coord c;
+    uint16 w = dim.w;
+    float64 h = dim.h * YtoXRatio;
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        uint16 odd = c.y % 2;
+
+        for (c.x = 0; c.x < dim.w; ++c.x, ++ins)
+        {
+            float64 x = c.x + odd * 0.5;
+            *ins = GetPerlinNoise(x, c.y * YtoXRatio, w, h, varFreq, 1.0, 0.1, 8, &inputNoise);
+        }
+    }
+    Normalize(&freqMap);
+
+    FloatMap* twistMap = out;
+    InitFloatMap(twistMap, dim, xWrap, yWrap);
+
+    ins = twistMap->data;
+    float64* fIt = freqMap.data;
+    float64 freqRange = (maxFreq - minFreq);
+    float64 mid = freqRange / 2.0 + minFreq;
+    float64 invMid = 1.0 / mid;
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        uint16 odd = c.y % 2;
+
+        for (c.x = 0; c.x < dim.w; ++c.x, ++ins, ++fIt)
+        {
+            float64 freq = *fIt * freqRange + minFreq;
+            float64 coordScale = freq * invMid;
+            float64 offset = (1.0 - coordScale) * invMid;
+            float64 ampChange = 0.85 - *fIt * 0.5;
+
+            float64 x = c.x + odd * 0.5;
+            *ins = GetPerlinNoise(x + offset, (c.y + offset) * YtoXRatio, w, h, mid, 1.0, ampChange, 8, &inputNoise);
+        }
+    }
+    Normalize(twistMap);
+
+    ExitFloatMap(&freqMap);
+    ExitFloatMap(&inputNoise);
+}
+
+void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
+    FloatMap* out)
+{
+    FloatMap inputNoise;
+    InitFloatMap(&inputNoise, dim, xWrap, yWrap);
+    GenerateBinaryNoise(&inputNoise);
+    Normalize(&inputNoise);
+
+    FloatMap inputNoise2;
+    InitFloatMap(&inputNoise2, dim, xWrap, yWrap);
+    GenerateBinaryNoise(&inputNoise2);
+    Normalize(&inputNoise2);
+
+    FloatMap* mountainMap = out;
+    InitFloatMap(mountainMap, dim, xWrap, yWrap);
+    FloatMap stdDevMap;
+    InitFloatMap(&stdDevMap, dim, xWrap, yWrap);
+    FloatMap noiseMap;
+    InitFloatMap(&noiseMap, dim, xWrap, yWrap);
+
+    float64* mtnIns = mountainMap->data;
+    Coord c;
+    uint16 w = dim.w;
+    float64 h = dim.h * YtoXRatio;
+    // init mountain map
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        uint16 odd = c.y % 2;
+        for (c.x = 0; c.x < dim.w; ++c.x, ++mtnIns)
+        {
+            float64 x = c.x + odd * 0.5;
+            *mtnIns = GetPerlinNoise(x, c.y * YtoXRatio, w, h, initFreq, 1.0, 0.4, 8, &inputNoise);
+        }
+    }
+    // mirror data
+    memcpy(stdDevMap.data, mountainMap->data, dim.w * dim.h);
+    // init noise map
+    float64* noiIns = noiseMap.data;
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        uint16 odd = c.y % 2;
+        for (c.x = 0; c.x < dim.w; ++c.x, ++noiIns)
+        {
+            float64 x = c.x + odd * 0.5;
+            *noiIns = GetPerlinNoise(x, c.y * YtoXRatio, w, h, initFreq, 1.0, 0.4, 8, &inputNoise2);
+        }
+    }
+
+    Normalize(mountainMap);
+    Deviate(&stdDevMap, 7);
+    Normalize(&stdDevMap);
+    Normalize(&noiseMap);
+
+    FloatMap moundMap;
+    InitFloatMap(&moundMap, dim, xWrap, yWrap);
+    float64* mtnIt = mountainMap->data;
+    float64* mndIns = moundMap.data;
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        for (c.x = 0; c.x < dim.w; ++c.x, ++mtnIt, ++mndIns)
+        {
+            float64 val = *mtnIt;
+            *mndIns = (sin(val * M_PI * 2 - M_PI_2) * 0.5 + 0.5) * GetAttenuationFactor(mountainMap, val, c);
+            //if (val < 0.5)
+            //    val = val * 4;
+            //else
+            //    val = (1 - val) * 4;
+            //*mtnIt = val;
+            *mtnIt = *mndIns;
+        }
+    }
+
+    Normalize(mountainMap);
+
+    mtnIt = mountainMap->data;
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        for (c.x = 0; c.x < dim.w; ++c.x, ++mtnIt)
+        {
+            float64 val = *mtnIt;
+            float64 p1 = sin(val * 3 * M_PI + M_PI_2);
+            float64 p2 = p1 * p1;
+            float64 p4 = p2 * p2;
+            float64 p8 = p4 * p4;
+            float64 p16 = p8 * p8;
+            float64 res = sqrt(p16 * val);
+
+            *mtnIt = res > 0.2 ? 1.0 : 0.0;
+        }
+    }
+
+    float64 stdDevThreshold = FindThresholdFromPercent(&stdDevMap, 1.0 - gSettings.landPercent, false);
+    float64 dblThres = 2.0 * stdDevThreshold;
+
+    mtnIt = mountainMap->data;
+    float64* mndIt = moundMap.data;
+    float64* sdvIt = stdDevMap.data;
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        for (c.x = 0; c.x < dim.w; ++c.x, ++mtnIt, ++mndIt, ++sdvIt)
+        {
+            float64 dev = 2.0 * *sdvIt - dblThres;
+            *mtnIt = (*mtnIt + *mndIt) * dev;
+        }
+    }
+
+    Normalize(mountainMap);
+}
+
 void WaterMatch() {}
-void GetAttenuationFactor() {}
+float64 GetAttenuationFactor(FloatMap* map, float64 val, Coord c) { return 0.0; }
 void GenerateElevationMap() {}
 void FillInLakes() {}
 void GenerateTempMaps() {}
@@ -2459,7 +2652,6 @@ void GetRingAroundCell() {}
 // --- Generation Functions ---------------------------------------------------
 
 void isNonCoastWaterMatch() {}
-void isNonCoastWaterMatch() {}
 
 struct PangaeaBreaker
 {
@@ -2477,7 +2669,6 @@ void CreateContinentList(PangaeaBreaker* brk) {}
 void CreateCentralityList(PangaeaBreaker* brk) {}
 void CreateNewWorldMap(PangaeaBreaker* brk) {}
 void IsTileNewWorld(PangaeaBreaker* brk) {}
-void GetOldWorldPlots(PangaeaBreaker* brk) {}
 void GetOldWorldPlots(PangaeaBreaker* brk) {}
 
 struct CentralityScore

@@ -522,6 +522,7 @@
   <ItemGroup>
     <ClInclude Include="PerfectOptWorld6.h" />
     <ClInclude Include="typedefs.h" />
+    <ClInclude Include="MapEnums.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PerfectOptWorld6.cpp" />

@@ -301,6 +301,7 @@
     <Xml Include="Core\PerfectWorld6Config.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="MapEnums.h" />
     <ClInclude Include="PerfectOptWorld6.h" />
     <ClInclude Include="typedefs.h" />
   </ItemGroup>
