@@ -4,23 +4,23 @@
 
 #undef MAP_SIZE_TYPES
 #define MAP_SIZE_TYPES         \
-    CONVERT(MAPSIZE_CUSTOM)    \
+    CONVERT(CUSTOM)    \
 \
-    CONVERT(MAPSIZE_DUEL)      \
-    CONVERT(MAPSIZE_TINY)      \
-    CONVERT(MAPSIZE_SMALL)     \
-    CONVERT(MAPSIZE_STANDARD)  \
-    CONVERT(MAPSIZE_LARGE)     \
-    CONVERT(MAPSIZE_HUGE)      \
+    CONVERT(DUEL)      \
+    CONVERT(TINY)      \
+    CONVERT(SMALL)     \
+    CONVERT(STANDARD)  \
+    CONVERT(LARGE)     \
+    CONVERT(HUGE)      \
 \
-    CONVERT(MAPSIZE_MASSIVE)   \
-    CONVERT(MAPSIZE_GIGANTIC)  \
-    CONVERT(MAPSIZE_COLOSSAL)  \
+    CONVERT(MASSIVE)   \
+    CONVERT(GIGANTIC)  \
+    CONVERT(COLOSSAL)  \
 \
-    CONVERT(MAPSIZE_ENORMOUS)  \
-    CONVERT(MAPSIZE_GIANT)     \
-    CONVERT(MAPSIZE_LUDICROUS) \
-    CONVERT(MAPSIZE_OVERSIZED) \
+    CONVERT(ENORMOUS)  \
+    CONVERT(GIANT)     \
+    CONVERT(LUDICROUS) \
+    CONVERT(OVERSIZED) \
 
 //               Base         PW6
 //      DUEL :  44 x 26     50 x  30
@@ -42,7 +42,7 @@
 static char const* mapSizeStrs[] =
 {
 #undef CONVERT
-#define CONVERT(n) #n,
+#define CONVERT(n) "MAPSIZE_" #n,
     MAP_SIZE_TYPES
 
     "INVALID"
@@ -76,92 +76,92 @@ enum MapSize
 
 #undef WONDER_TYPES
 #define WONDER_TYPES                     \
-    CONVERT(FEATURE_BARRIER_REEF)        \
-    CONVERT(FEATURE_CLIFFS_DOVER)        \
-    CONVERT(FEATURE_CRATER_LAKE)         \
-    CONVERT(FEATURE_DEAD_SEA)            \
-    CONVERT(FEATURE_EVEREST)             \
-    CONVERT(FEATURE_GALAPAGOS)           \
-    CONVERT(FEATURE_KILIMANJARO)         \
-    CONVERT(FEATURE_PANTANAL)            \
-    CONVERT(FEATURE_PIOPIOTAHI)          \
-    CONVERT(FEATURE_TORRES_DEL_PAINE)    \
-    CONVERT(FEATURE_TSINGY)              \
-    CONVERT(FEATURE_YOSEMITE)            \
+    CONVERT(BARRIER_REEF)        \
+    CONVERT(CLIFFS_DOVER)        \
+    CONVERT(CRATER_LAKE)         \
+    CONVERT(DEAD_SEA)            \
+    CONVERT(EVEREST)             \
+    CONVERT(GALAPAGOS)           \
+    CONVERT(KILIMANJARO)         \
+    CONVERT(PANTANAL)            \
+    CONVERT(PIOPIOTAHI)          \
+    CONVERT(TORRES_DEL_PAINE)    \
+    CONVERT(TSINGY)              \
+    CONVERT(YOSEMITE)            \
 \
-    CONVERT(FEATURE_DELICATE_ARCH)       \
-    CONVERT(FEATURE_EYE_OF_THE_SAHARA)   \
-    CONVERT(FEATURE_LAKE_RETBA)          \
-    CONVERT(FEATURE_MATTERHORN)          \
-    CONVERT(FEATURE_RORAIMA)             \
-    CONVERT(FEATURE_UBSUNUR_HOLLOW)      \
-    CONVERT(FEATURE_ZHANGYE_DANXIA)      \
+    CONVERT(DELICATE_ARCH)       \
+    CONVERT(EYE_OF_THE_SAHARA)   \
+    CONVERT(LAKE_RETBA)          \
+    CONVERT(MATTERHORN)          \
+    CONVERT(RORAIMA)             \
+    CONVERT(UBSUNUR_HOLLOW)      \
+    CONVERT(ZHANGYE_DANXIA)      \
 \
-    CONVERT(FEATURE_CHOCOLATEHILLS)      \
-    CONVERT(FEATURE_DEVILSTOWER)         \
-    CONVERT(FEATURE_GOBUSTAN)            \
-    CONVERT(FEATURE_IKKIL)               \
-    CONVERT(FEATURE_PAMUKKALE)           \
-    CONVERT(FEATURE_VESUVIUS)            \
-    CONVERT(FEATURE_WHITEDESERT)         \
+    CONVERT(CHOCOLATEHILLS)      \
+    CONVERT(DEVILSTOWER)         \
+    CONVERT(GOBUSTAN)            \
+    CONVERT(IKKIL)               \
+    CONVERT(PAMUKKALE)           \
+    CONVERT(VESUVIUS)            \
+    CONVERT(WHITEDESERT)         \
 \
-    CONVERT(FEATURE_BERMUDA_TRIANGLE)    \
-    CONVERT(FEATURE_FOUNTAIN_OF_YOUTHc)  \
-    CONVERT(FEATURE_PAITITI)             \
+    CONVERT(BERMUDA_TRIANGLE)    \
+    CONVERT(FOUNTAIN_OF_YOUTHc)  \
+    CONVERT(PAITITI)             \
 \
-    CONVERT(FEATURE_EYJAFJALLAJOKULL)    \
-    CONVERT(FEATURE_GIANTS_CAUSEWAY)     \
-    CONVERT(FEATURE_LYSEFJORDEN)         \
+    CONVERT(EYJAFJALLAJOKULL)    \
+    CONVERT(GIANTS_CAUSEWAY)     \
+    CONVERT(LYSEFJORDEN)         \
 \
-    CONVERT(FEATURE_HA_LONG_BAY)         \
+    CONVERT(HA_LONG_BAY)         \
 \
-    CONVERT(FEATURE_ULURU)               \
+    CONVERT(ULURU)               \
 \
-    CONVERT(FEATURE_BARRINGER_CRATER)    \
-    CONVERT(FEATURE_BIOLUMINESCENT_BAY)  \
-    CONVERT(FEATURE_CERRO_DE_POTOSI)     \
-    CONVERT(FEATURE_DALLOL)              \
-    CONVERT(FEATURE_GIBRALTAR)           \
-    CONVERT(FEATURE_GRAND_MESA)          \
-    CONVERT(FEATURE_KAILASH)             \
-    CONVERT(FEATURE_KRAKATOA)            \
-    CONVERT(FEATURE_LAKE_VICTORIA)       \
-    CONVERT(FEATURE_LENCOIS_MARANHENSES) \
-    CONVERT(FEATURE_MOSI_OA_TUNYA)       \
-    CONVERT(FEATURE_MOTLATSE_CANYON)     \
-    CONVERT(FEATURE_NAMIB)               \
-    CONVERT(FEATURE_OLD_FAITHFUL)        \
-    CONVERT(FEATURE_OUNIANGA)            \
-    CONVERT(FEATURE_SALAR_DE_UYUNI)      \
-    CONVERT(FEATURE_SINAI)               \
-    CONVERT(FEATURE_SRI_PADA)            \
-    CONVERT(FEATURE_VREDEFORT_DOME)      \
-    CONVERT(FEATURE_WULINGYUAN)          \
+    CONVERT(BARRINGER_CRATER)    \
+    CONVERT(BIOLUMINESCENT_BAY)  \
+    CONVERT(CERRO_DE_POTOSI)     \
+    CONVERT(DALLOL)              \
+    CONVERT(GIBRALTAR)           \
+    CONVERT(GRAND_MESA)          \
+    CONVERT(KAILASH)             \
+    CONVERT(KRAKATOA)            \
+    CONVERT(LAKE_VICTORIA)       \
+    CONVERT(LENCOIS_MARANHENSES) \
+    CONVERT(MOSI_OA_TUNYA)       \
+    CONVERT(MOTLATSE_CANYON)     \
+    CONVERT(NAMIB)               \
+    CONVERT(OLD_FAITHFUL)        \
+    CONVERT(OUNIANGA)            \
+    CONVERT(SALAR_DE_UYUNI)      \
+    CONVERT(SINAI)               \
+    CONVERT(SRI_PADA)            \
+    CONVERT(VREDEFORT_DOME)      \
+    CONVERT(WULINGYUAN)          \
 
 
 // --- Features
 
 #undef FEATURE_TYPES
 #define FEATURE_TYPES                      \
-    CONVERT(FEATURE_NONE)                  \
+    CONVERT(NONE)                  \
 \
-    CONVERT(FEATURE_FLOODPLAINS)           \
-    CONVERT(FEATURE_FLOODPLAINS_GRASSLAND) \
-    CONVERT(FEATURE_FLOODPLAINS_PLAINS)    \
-    CONVERT(FEATURE_FOREST)                \
-    CONVERT(FEATURE_GEOTHERMAL_FISSURE)    \
-    CONVERT(FEATURE_ICE)                   \
-    CONVERT(FEATURE_JUNGLE)                \
-    CONVERT(FEATURE_MARSH)                 \
-    CONVERT(FEATURE_OASIS)                 \
-    CONVERT(FEATURE_REEF)                  \
-    CONVERT(FEATURE_VOLCANIC_SOIL)         \
-    CONVERT(FEATURE_VOLCANO)               \
+    CONVERT(FLOODPLAINS)           \
+    CONVERT(FLOODPLAINS_GRASSLAND) \
+    CONVERT(FLOODPLAINS_PLAINS)    \
+    CONVERT(FOREST)                \
+    CONVERT(GEOTHERMAL_FISSURE)    \
+    CONVERT(ICE)                   \
+    CONVERT(JUNGLE)                \
+    CONVERT(MARSH)                 \
+    CONVERT(OASIS)                 \
+    CONVERT(REEF)                  \
+    CONVERT(VOLCANIC_SOIL)         \
+    CONVERT(VOLCANO)               \
 
 static char const* featureStrs[] =
 {
 #undef CONVERT
-#define CONVERT(n) #n,
+#define CONVERT(n) "FEATURE_" #n,
     FEATURE_TYPES
     WONDER_TYPES
 
@@ -175,7 +175,17 @@ enum Feature
     FEATURE_TYPES
     WONDER_TYPES
 
-    fNum
+    fNum,
+
+    fWondersStart = fBARRIER_REEF,
+
+    fWondersEndBase = fYOSEMITE + 1,
+    fWondersEndExp1 = fZHANGYE_DANXIA + 1,
+    fWondersEndExp2 = fWHITEDESERT + 1,
+    fWondersEndOfficial = fULURU + 1,
+    fWondersEndMods = fWULINGYUAN + 1,
+
+    fWondersEnd = fWondersEndOfficial,
 };
 
 
@@ -189,68 +199,68 @@ enum Feature
 
 #undef RESOURCE_TYPES
 #define RESOURCE_TYPES                 \
-    CONVERT(RESOURCE_NONE)             \
+    CONVERT(NONE)             \
 \
-    CONVERT(RESOURCE_BANANAS)          \
-    CONVERT(RESOURCE_CATTLE)           \
-    CONVERT(RESOURCE_COPPER)           \
-    CONVERT(RESOURCE_CRABS)            \
-    CONVERT(RESOURCE_DEER)             \
-    CONVERT(RESOURCE_FISH)             \
-    CONVERT(RESOURCE_RICE)             \
-    CONVERT(RESOURCE_SHEEP)            \
-    CONVERT(RESOURCE_STONE)            \
-    CONVERT(RESOURCE_WHEAT)            \
-    CONVERT(RESOURCE_CITRUS)           \
-    CONVERT(RESOURCE_COCOA)            \
-    CONVERT(RESOURCE_COFFEE)           \
-    CONVERT(RESOURCE_COTTON)           \
-    CONVERT(RESOURCE_DIAMONDS)         \
-    CONVERT(RESOURCE_DYES)             \
-    CONVERT(RESOURCE_FURS)             \
-    CONVERT(RESOURCE_GYPSUM)           \
-    CONVERT(RESOURCE_INCENSE)          \
-    CONVERT(RESOURCE_IVORY)            \
-    CONVERT(RESOURCE_JADE)             \
-    CONVERT(RESOURCE_MARBLE)           \
-    CONVERT(RESOURCE_MERCURY)          \
-    CONVERT(RESOURCE_PEARLS)           \
-    CONVERT(RESOURCE_SALT)             \
-    CONVERT(RESOURCE_SILK)             \
-    CONVERT(RESOURCE_SILVER)           \
-    CONVERT(RESOURCE_SPICES)           \
-    CONVERT(RESOURCE_SUGAR)            \
-    CONVERT(RESOURCE_TEA)              \
-    CONVERT(RESOURCE_TOBACCO)          \
-    CONVERT(RESOURCE_TRUFFLES)         \
-    CONVERT(RESOURCE_WHALES)           \
-    CONVERT(RESOURCE_WINE)             \
-    CONVERT(RESOURCE_ALUMINUM)         \
-    CONVERT(RESOURCE_COAL)             \
-    CONVERT(RESOURCE_HORSES)           \
-    CONVERT(RESOURCE_IRON)             \
-    CONVERT(RESOURCE_NITER)            \
-    CONVERT(RESOURCE_OIL)              \
-    CONVERT(RESOURCE_URANIUM)          \
+    CONVERT(BANANAS)          \
+    CONVERT(CATTLE)           \
+    CONVERT(COPPER)           \
+    CONVERT(CRABS)            \
+    CONVERT(DEER)             \
+    CONVERT(FISH)             \
+    CONVERT(RICE)             \
+    CONVERT(SHEEP)            \
+    CONVERT(STONE)            \
+    CONVERT(WHEAT)            \
+    CONVERT(CITRUS)           \
+    CONVERT(COCOA)            \
+    CONVERT(COFFEE)           \
+    CONVERT(COTTON)           \
+    CONVERT(DIAMONDS)         \
+    CONVERT(DYES)             \
+    CONVERT(FURS)             \
+    CONVERT(GYPSUM)           \
+    CONVERT(INCENSE)          \
+    CONVERT(IVORY)            \
+    CONVERT(JADE)             \
+    CONVERT(MARBLE)           \
+    CONVERT(MERCURY)          \
+    CONVERT(PEARLS)           \
+    CONVERT(SALT)             \
+    CONVERT(SILK)             \
+    CONVERT(SILVER)           \
+    CONVERT(SPICES)           \
+    CONVERT(SUGAR)            \
+    CONVERT(TEA)              \
+    CONVERT(TOBACCO)          \
+    CONVERT(TRUFFLES)         \
+    CONVERT(WHALES)           \
+    CONVERT(WINE)             \
+    CONVERT(ALUMINUM)         \
+    CONVERT(COAL)             \
+    CONVERT(HORSES)           \
+    CONVERT(IRON)             \
+    CONVERT(NITER)            \
+    CONVERT(OIL)              \
+    CONVERT(URANIUM)          \
 \
-    CONVERT(RESOURCE_AMBER)            \
-    CONVERT(RESOURCE_OLIVES)           \
-    CONVERT(RESOURCE_TURTLES)          \
+    CONVERT(AMBER)            \
+    CONVERT(OLIVES)           \
+    CONVERT(TURTLES)          \
 \
-    CONVERT(RESOURCE_MAIZE)            \
-    CONVERT(RESOURCE_HONEY)            \
+    CONVERT(MAIZE)            \
+    CONVERT(HONEY)            \
 \
-    CONVERT(RESOURCE_P0K_PAPYRUS)      \
-    CONVERT(RESOURCE_P0K_PENGUINS)     \
-    CONVERT(RESOURCE_P0K_PLUMS)        \
-    CONVERT(RESOURCE_CVS_POMEGRANATES) \
-    CONVERT(RESOURCE_P0K_MAPLE)        \
-    CONVERT(RESOURCE_P0K_OPAL)         \
+    CONVERT(P0K_PAPYRUS)      \
+    CONVERT(P0K_PENGUINS)     \
+    CONVERT(P0K_PLUMS)        \
+    CONVERT(CVS_POMEGRANATES) \
+    CONVERT(P0K_MAPLE)        \
+    CONVERT(P0K_OPAL)         \
 
 static char const* resourceStrs[] =
 {
 #undef CONVERT
-#define CONVERT(n) #n,
+#define CONVERT(n) "RESOURCE_" #n,
     RESOURCE_TYPES
 
     "INVALID"
@@ -276,17 +286,17 @@ enum Resource
 #define FLOWDIRECTION_TYPES          \
     CONVERT(NO_FLOW)                 \
 \
-    CONVERT(FLOWDIRECTION_NORTH)     \
-    CONVERT(FLOWDIRECTION_NORTHEAST) \
-    CONVERT(FLOWDIRECTION_SOUTHEAST) \
-    CONVERT(FLOWDIRECTION_SOUTH)     \
-    CONVERT(FLOWDIRECTION_SOUTHWEST) \
-    CONVERT(FLOWDIRECTION_NORTHWEST) \
+    CONVERT(NORTH)     \
+    CONVERT(NORTHEAST) \
+    CONVERT(SOUTHEAST) \
+    CONVERT(SOUTH)     \
+    CONVERT(SOUTHWEST) \
+    CONVERT(NORTHWEST) \
 
 static char const* flowDirStrs[] =
 {
 #undef CONVERT
-#define CONVERT(n) #n,
+#define CONVERT(n) "FLOWDIRECTION_" #n,
     FLOWDIRECTION_TYPES
 
     "INVALID"
@@ -298,36 +308,39 @@ enum TileFlowDirection
 #define CONVERT(n) tfd##n,
     FLOWDIRECTION_TYPES
 
-    tfdNum
+    tfdNum,
+
+    tfdStart = tfdNORTH,
+    tfdEnd = tfdNORTHWEST + 1,
 };
 
 
 // --- Terrain ----------------------------------------------------------------
 
 #undef TERRAIN_TYPES
-#define TERRAIN_TYPES \
-    CONVERT(TERRAIN_COAST)        \
-    CONVERT(TERRAIN_DESERT)       \
-    CONVERT(TERRAIN_DESERT_HILLS) \
-    CONVERT(TERRAIN_DESERT_MOUNTAIN) \
-    CONVERT(TERRAIN_GRASS) \
-    CONVERT(TERRAIN_GRASS_HILLS) \
-    CONVERT(TERRAIN_GRASS_MOUNTAIN) \
-    CONVERT(TERRAIN_OCEAN) \
-    CONVERT(TERRAIN_PLAINS) \
-    CONVERT(TERRAIN_PLAINS_HILLS) \
-    CONVERT(TERRAIN_PLAINS_MOUNTAIN) \
-    CONVERT(TERRAIN_SNOW) \
-    CONVERT(TERRAIN_SNOW_HILLS) \
-    CONVERT(TERRAIN_SNOW_MOUNTAIN) \
-    CONVERT(TERRAIN_TUNDRA) \
-    CONVERT(TERRAIN_TUNDRA_HILLS) \
-    CONVERT(TERRAIN_TUNDRA_MOUNTAIN) \
+#define TERRAIN_TYPES                \
+    CONVERT(COAST)           \
+    CONVERT(OCEAN)           \
+    CONVERT(DESERT)          \
+    CONVERT(GRASS)           \
+    CONVERT(PLAINS)          \
+    CONVERT(SNOW)            \
+    CONVERT(TUNDRA)          \
+    CONVERT(DESERT_HILLS)    \
+    CONVERT(GRASS_HILLS)     \
+    CONVERT(PLAINS_HILLS)    \
+    CONVERT(SNOW_HILLS)      \
+    CONVERT(TUNDRA_HILLS)    \
+    CONVERT(DESERT_MOUNTAIN) \
+    CONVERT(GRASS_MOUNTAIN)  \
+    CONVERT(PLAINS_MOUNTAIN) \
+    CONVERT(SNOW_MOUNTAIN)   \
+    CONVERT(TUNDRA_MOUNTAIN) \
 
 static char const* terrainStrs[] =
 {
 #undef CONVERT
-#define CONVERT(n) #n,
+#define CONVERT(n) "TERRAIN_" #n,
     TERRAIN_TYPES
 
     "INVALID"
@@ -339,7 +352,19 @@ enum Terrain
 #define CONVERT(n) t##n,
     TERRAIN_TYPES
 
-    tNum
+    tNum,
+
+    tWaterStart = tCOAST,
+    tWaterEnd = tOCEAN + 1,
+    tLandStart = tDESERT,
+    tLandEnd = tTUNDRA_MOUNTAIN + 1,
+
+    tBaseStart = tCOAST,
+    tBaseEnd = tTUNDRA + 1,
+    tHillsStart = tDESERT_HILLS,
+    tHillsEnd = tTUNDRA_HILLS + 1,
+    tMountainsStart = tDESERT_MOUNTAIN,
+    tMountainsEnd = tTUNDRA_MOUNTAIN + 1,
 };
 
 

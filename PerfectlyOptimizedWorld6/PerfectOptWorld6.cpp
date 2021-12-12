@@ -126,6 +126,12 @@ struct LakeDataUtil
     uint32 currentLakeSize;
 };
 
+struct RefMap
+{
+    Coord c;
+    float64 val;
+};
+
 
 // --- Map
 
@@ -146,8 +152,11 @@ struct MapSettings
     uint8 wrapX = 1;
     uint8 wrapY = 0;
 
-    uint8 mapSizeType = msMAPSIZE_STANDARD;
+    uint8 mapSizeType = msSTANDARD;
 };
+
+// Considerations:
+//   Oasis exclusion flag
 
 // YMMV, but bitfields work fine on my system for my use case
 struct MapTile
@@ -263,6 +272,14 @@ enum Quadrant
     qD,
 };
 
+enum PlotType
+{
+    ptOcean,
+    ptLand,
+    ptHills,
+    ptMountain,
+};
+
 // Maps look bad if too many meteors are required to break up a pangaea.
 // Map will regen after this many meteors are thrown.
 static const uint32 maximumMeteorCount = 12;
@@ -310,7 +327,7 @@ void InitRiver(River* river, RiverJunction* sourceJunc, uint32 rawID);
 void Add(River* river, RiverJunction* junc);
 void AddParent(RiverJunction* junc, RiverJunction* parent);
 void InitRiverJunction(RiverJunction* junc, Coord c, bool isNorth);
-float64 GetAttenuationFactor(FloatMap* map, float64 val, Coord c);
+float64 GetAttenuationFactor(Dim dim, Coord c);
 
 
 // --- Util Functions ---------------------------------------------------------
@@ -574,7 +591,7 @@ float64 GetPerlinDerivative(float64 x, float64 y, uint16 destMapWidth, float64 d
 
 inline bool IsWater(MapTile* tile)
 {
-    return tile->terrain == tTERRAIN_COAST || tile->terrain == tTERRAIN_OCEAN;
+    return tile->terrain < tWaterEnd;
 }
 
 // --- FloatMap
@@ -793,41 +810,41 @@ float64 FindThresholdFromPercent(FloatMap* map, float64 percent, bool excludeZer
     return retval;
 }
 
-float64 GetLatitudeForY(FloatMap* map, PW6Settings* settings, uint16 y)
+float64 GetLatitudeForY(FloatMap* map, uint16 y)
 {
-    int32 range = settings->topLatitude - settings->bottomLatitude;
-    return (y / (float64)map->dim.h) * range + settings->bottomLatitude;
+    int32 range = gSettings.topLatitude - gSettings.bottomLatitude;
+    return (y / (float64)map->dim.h) * range + gSettings.bottomLatitude;
 }
 
-uint16 GetYForLatitude(FloatMap* map, PW6Settings* settings, float64 lat)
+uint16 GetYForLatitude(FloatMap* map, float64 lat)
 {
-    int32 range = settings->topLatitude - settings->bottomLatitude;
-    return (uint16)floor((((lat - settings->bottomLatitude) / range) * map->dim.h) + 0.5);
+    int32 range = gSettings.topLatitude - gSettings.bottomLatitude;
+    return (uint16)floor((((lat - gSettings.bottomLatitude) / range) * map->dim.h) + 0.5);
 }
 
-WindZone GetZone(FloatMap* map, PW6Settings* settings, uint16 y)
+WindZone GetZone(FloatMap* map, uint16 y)
 {
     if (y >= map->dim.h)
         return wNo;
 
     // TODO: preassign values to bit fields
-    float64 lat = GetLatitudeForY(map, settings, y);
+    float64 lat = GetLatitudeForY(map, y);
 
-    if (lat > settings->polarFrontLatitude)
+    if (lat > gSettings.polarFrontLatitude)
         return wNPolar;
-    else if (lat >= settings->horseLatitudes)
+    else if (lat >= gSettings.horseLatitudes)
         return wNTemperate;
     else if (lat >= 0.0)
         return wNEquator;
-    else if (lat > -settings->horseLatitudes)
+    else if (lat > -gSettings.horseLatitudes)
         return wSEquator;
-    else if (lat >= -settings->polarFrontLatitude)
+    else if (lat >= -gSettings.polarFrontLatitude)
         return wSTemperate;
 
     return wSPolar;
 }
 
-uint16 GetYFromZone(FloatMap* map, PW6Settings* settings, WindZone zone, bool bTop)
+uint16 GetYFromZone(FloatMap* map, WindZone zone, bool bTop)
 {
     // TODO: pre calc these values on loading settings
     if (bTop)
@@ -835,14 +852,14 @@ uint16 GetYFromZone(FloatMap* map, PW6Settings* settings, WindZone zone, bool bT
         for (uint16 y = map->dim.h; y > 0;)
         {
             --y;
-            if (GetZone(map, settings, y) == zone)
+            if (GetZone(map, y) == zone)
                 return y;
         }
     }
     else
     {
         for (uint16 y = 0; y < map->dim.h; ++y)
-            if (GetZone(map, settings, y) == zone)
+            if (GetZone(map, y) == zone)
                 return y;
     }
 
@@ -874,45 +891,45 @@ std::pair<Dir, Dir> GetGeostrophicWindDirections(WindZone zone)
     return { dInv, dInv };
 }
 
-float64 GetGeostrophicPressure(FloatMap* map, PW6Settings* settings, float64 lat)
+float64 GetGeostrophicPressure(FloatMap* map, float64 lat)
 {
     float64 latRange;
     float64 latPercent;
     float64 pressure;
 
-    if (lat > settings->polarFrontLatitude)
+    if (lat > gSettings.polarFrontLatitude)
     {
-        latRange = 90.0 - settings->polarFrontLatitude;
-        latPercent = (lat - settings->polarFrontLatitude) / latRange;
+        latRange = 90.0 - gSettings.polarFrontLatitude;
+        latPercent = (lat - gSettings.polarFrontLatitude) / latRange;
         pressure = 1.0 - latPercent;
     }
-    else if (lat >= settings->horseLatitudes)
+    else if (lat >= gSettings.horseLatitudes)
     {
-        latRange = settings->polarFrontLatitude - settings->horseLatitudes;
-        latPercent = (lat - settings->horseLatitudes) / latRange;
+        latRange = gSettings.polarFrontLatitude - gSettings.horseLatitudes;
+        latPercent = (lat - gSettings.horseLatitudes) / latRange;
         pressure = latPercent;
     }
     else if (lat >= 0.0)
     {
-        latRange = settings->horseLatitudes - 0.0;
+        latRange = gSettings.horseLatitudes - 0.0;
         latPercent = (lat - 0.0) / latRange;
         pressure = 1.0 - latPercent;
     }
-    else if (lat > -settings->horseLatitudes)
+    else if (lat > -gSettings.horseLatitudes)
     {
-        latRange = 0.0 + settings->horseLatitudes;
-        latPercent = (lat + settings->horseLatitudes) / latRange;
+        latRange = 0.0 + gSettings.horseLatitudes;
+        latPercent = (lat + gSettings.horseLatitudes) / latRange;
         pressure = latPercent;
     }
-    else if (lat >= -settings->polarFrontLatitude)
+    else if (lat >= -gSettings.polarFrontLatitude)
     {
-        latRange = -settings->horseLatitudes + settings->polarFrontLatitude;
-        latPercent = (lat + settings->polarFrontLatitude) / latRange;
+        latRange = -gSettings.horseLatitudes + gSettings.polarFrontLatitude;
+        latPercent = (lat + gSettings.polarFrontLatitude) / latRange;
         pressure = 1.0 - latPercent;
     }
     else
     {
-        latRange = -settings->polarFrontLatitude + 90.0;
+        latRange = -gSettings.polarFrontLatitude + 90.0;
         latPercent = (lat + 90) / latRange;
         pressure = latPercent;
     }
@@ -931,16 +948,16 @@ void ApplyFunction(FloatMap* map, Mutator func)
         func(it);
 }
 
-uint32 GetRadiusAroundHex(FloatMap* map, Coord c, uint32 rad, Coord * out)
+uint32 GetRadiusAroundHex(FloatMap* map, Coord c, uint32 rad, Coord ** out)
 {
     uint32 binCoef = (rad * (rad + 1)) / 2;
     uint32 maxTiles = 1 + 6 * binCoef;
-    out = (Coord*)calloc(maxTiles, sizeof(Coord));
-    *out = c;
+    Coord* coords = (Coord*)calloc(maxTiles, sizeof(Coord));
+    *coords = c;
     uint32 count = 1;
 
     Coord ref = c;
-    Coord* it = out + 1;
+    Coord* it = coords + 1;
 
     // make a circle for each radius
     for (uint32 r = 0; r < rad; ++r)
@@ -1017,13 +1034,14 @@ uint32 GetRadiusAroundHex(FloatMap* map, Coord c, uint32 rad, Coord * out)
         GetNeighbor(map, ref, dNW, &ref);
     }
 
+    *out = coords;
     return count;
 }
 
 float64 GetAverageInHex(FloatMap* map, Coord c, uint32 rad)
 {
     Coord* refCoords = NULL;
-    uint32 size = GetRadiusAroundHex(map, c, rad, refCoords);
+    uint32 size = GetRadiusAroundHex(map, c, rad, &refCoords);
     float64 avg = 0.0;
 
     Coord* end = refCoords + size;
@@ -1040,7 +1058,7 @@ float64 GetAverageInHex(FloatMap* map, Coord c, uint32 rad)
 float64 GetStdDevInHex(FloatMap* map, Coord c, uint32 rad)
 {
     Coord* refCoords = NULL;
-    uint32 size = GetRadiusAroundHex(map, c, rad, refCoords);
+    uint32 size = GetRadiusAroundHex(map, c, rad, &refCoords);
     float64 avg = 0.0;
 
     Coord* end = refCoords + size;
@@ -1703,10 +1721,10 @@ void SiltifyLakes(RiverMap* map)
 
 float64* rainfallMap; // TODO: move
 
-void RecreateNewLakes(RiverMap* map, PW6Settings * settings)
+void RecreateNewLakes(RiverMap* map)
 {
     LakeDataUtil ldu;
-    ldu.lakesToAdd = (uint32)(map->eMap->base.length * settings->landPercent * settings->lakePercent);
+    ldu.lakesToAdd = (uint32)(map->eMap->base.length * gSettings.landPercent * gSettings.lakePercent);
     ldu.lakesAdded = 0;
     ldu.currentLakeID = 1;
 
@@ -1862,7 +1880,7 @@ bool ValidLakeHex(RiverMap* map, RiverHex* lakeHex, LakeDataUtil* ldu)
 
     // can't be on a volcano
     MapTile* plot = gMap + ii;
-    if (plot->feature != fFEATURE_NONE)
+    if (plot->feature != fNONE)
         return false;
 
     std::vector<uint32> cellList = GetRadiusAroundCell(lakeHex->coord);
@@ -2007,7 +2025,7 @@ static uint32 GetFilteredJuncData(RiverMap* map, RiverJunction*** out)
     return (uint32)(juncIns - *out);
 }
 
-void SetRiverSizes(RiverMap* map, PW6Settings* settings, float64 * locRainfallMap)
+void SetRiverSizes(RiverMap* map, float64 * locRainfallMap)
 {
     // only include junctions not touching ocean in this list
     RiverJunction** junctionList = nullptr;
@@ -2058,7 +2076,7 @@ void SetRiverSizes(RiverMap* map, PW6Settings* settings, float64 * locRainfallMa
     it = junctionList;
     std::sort(it, end, [](RiverJunction* a, RiverJunction* b) { return a->size > b->size; });
 
-    uint32 riverIndex = (uint32)(floor(settings->riverPercent * size));
+    uint32 riverIndex = (uint32)(floor(gSettings.riverPercent * size));
     map->riverThreshold = junctionList[riverIndex]->size;
 
     free(junctionList);
@@ -2287,7 +2305,7 @@ FlowDirRet GetFlowDirections(RiverMap* map, Coord c)
         map->riverData[ii].southJunction.size > map->riverThreshold &&
         map->riverData[ii].southJunction.id != UINT32_MAX)
     {
-        WOfRiver = tfdFLOWDIRECTION_SOUTH;
+        WOfRiver = tfdSOUTH;
         WID = map->riverData[ii].southJunction.id;
     }
 
@@ -2299,7 +2317,7 @@ FlowDirRet GetFlowDirections(RiverMap* map, Coord c)
         map->riverData[ii].northJunction.size > map->riverThreshold &&
         map->riverData[ii].northJunction.id != UINT32_MAX)
     {
-        WOfRiver = tfdFLOWDIRECTION_NORTH;
+        WOfRiver = tfdNORTH;
         WID = map->riverData[ii].northJunction.id;
     }
 
@@ -2315,7 +2333,7 @@ FlowDirRet GetFlowDirections(RiverMap* map, Coord c)
         map->riverData[ii].northJunction.size > map->riverThreshold &&
         map->riverData[ii].northJunction.id != UINT32_MAX)
     {
-        NWOfRiver = tfdFLOWDIRECTION_SOUTHWEST;
+        NWOfRiver = tfdSOUTHWEST;
         NWID = map->riverData[ii].northJunction.id;
     }
 
@@ -2323,7 +2341,7 @@ FlowDirRet GetFlowDirections(RiverMap* map, Coord c)
         map->riverData[i].southJunction.size > map->riverThreshold &&
         map->riverData[i].southJunction.id != UINT32_MAX)
     {
-        NWOfRiver = tfdFLOWDIRECTION_NORTHEAST;
+        NWOfRiver = tfdNORTHEAST;
         NWID = map->riverData[i].southJunction.id;
     }
 
@@ -2339,7 +2357,7 @@ FlowDirRet GetFlowDirections(RiverMap* map, Coord c)
         map->riverData[ii].northJunction.size > map->riverThreshold &&
         map->riverData[ii].northJunction.id != UINT32_MAX)
     {
-        NEOfRiver = tfdFLOWDIRECTION_SOUTHEAST;
+        NEOfRiver = tfdSOUTHEAST;
         NEID = map->riverData[ii].northJunction.id;
     }
 
@@ -2347,7 +2365,7 @@ FlowDirRet GetFlowDirections(RiverMap* map, Coord c)
         map->riverData[i].southJunction.size > map->riverThreshold &&
         map->riverData[i].southJunction.id != UINT32_MAX)
     {
-        NEOfRiver = tfdFLOWDIRECTION_NORTHWEST;
+        NEOfRiver = tfdNORTHWEST;
         NEID = map->riverData[i].southJunction.id;
     }
 
@@ -2568,7 +2586,7 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
         for (c.x = 0; c.x < dim.w; ++c.x, ++mtnIt, ++mndIns)
         {
             float64 val = *mtnIt;
-            *mndIns = (sin(val * M_PI * 2 - M_PI_2) * 0.5 + 0.5) * GetAttenuationFactor(mountainMap, val, c);
+            *mndIns = (sin(val * M_PI * 2 - M_PI_2) * 0.5 + 0.5) * GetAttenuationFactor(dim, c);
             //if (val < 0.5)
             //    val = val * 4;
             //else
@@ -2615,22 +2633,622 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
     Normalize(mountainMap);
 }
 
-void WaterMatch() {}
-float64 GetAttenuationFactor(FloatMap* map, float64 val, Coord c) { return 0.0; }
-void GenerateElevationMap() {}
-void FillInLakes() {}
-void GenerateTempMaps() {}
-void GenerateRainfallMap() {}
-void DistributeRain() {}
-void GetRainCost() {}
-void GetDifferenceAroundHex() {}
-void PlacePossibleOasis() {}
-void PlacePossibleIce() {}
-void PlacePossibleReef() {}
-void AddTerrainFromContinents() {}
+float64 GetAttenuationFactor(Dim dim, Coord c)
+{
+    float64 yAttenuation = 1.0;
+    float64 xAttenuation = 1.0;
+
+    float64 southRange = dim.h * gSettings.southAttenuationRange;
+    float64 southY = southRange;
+    if (c.y < southY)
+        yAttenuation = gSettings.southAttenuationFactor + (c.y / southRange) * (1.0 - gSettings.southAttenuationFactor);
+
+    float64 northRange = dim.h * gSettings.northAttenuationRange;
+    float64 northY = dim.h - northRange;
+    if (c.y > southY)
+        yAttenuation = gSettings.northAttenuationFactor + ((dim.h - c.y) / northRange) * (1.0 - gSettings.northAttenuationFactor);
+
+    float64 eastRange = dim.w * gSettings.eastAttenuationRange;
+    float64 eastX = dim.w - eastRange;
+    if (c.x > eastX)
+        xAttenuation = gSettings.eastAttenuationFactor + ((dim.w - c.x) / eastRange) * (1.0 - gSettings.eastAttenuationFactor);
+
+    float64 westRange = dim.w * gSettings.westAttenuationRange;
+    float64 westX = westRange;
+    if (c.x < westX)
+        xAttenuation = gSettings.westAttenuationFactor + (c.x / westRange) * (1.0 - gSettings.westAttenuationFactor);
+
+    return yAttenuation * xAttenuation;
+}
+
+void GenerateElevationMap(Dim dim, bool xWrap, bool yWrap, ElevationMap * out)
+{
+    float64 scale = 128.0 / dim.w;
+    float64 twistMinFreq = scale * gSettings.twistMinFreq; // 0.02 /128
+    float64 twistMaxFreq = scale * gSettings.twistMaxFreq; // 0.12 /128
+    float64 twistVar = scale * gSettings.twistVar;         // 0.042/128
+    float64 mountainFreq = scale * gSettings.mountainFreq; // 0.05 /128
+
+    FloatMap twistMap;
+    GenerateTwistedPerlinMap(dim, xWrap, yWrap, twistMinFreq, twistMaxFreq, twistVar, &twistMap);
+    FloatMap mountainMap;
+    GenerateMountainMap(dim, xWrap, yWrap, mountainFreq, &mountainMap);
+    ElevationMap* elevationMap = out;
+    InitElevationMap(elevationMap, dim, xWrap, yWrap);
+
+    float64* it = twistMap.data;
+    float64* end = it + twistMap.length;
+    float64* mIt = mountainMap.data;
+    float64* eIt = elevationMap->base.data;
+
+    for (; it < end; ++it, ++mIt, ++eIt)
+    {
+        float64 tVal = *it;
+        //this formula adds a curve flattening the extremes
+        tVal = sin(tVal * M_PI - M_PI_2) * 0.5 + 0.5;
+        tVal = sqrt(sqrt(tVal));
+        *eIt = tVal + ((*mIt * 2) - 1) * gSettings.mountainWeight;
+    }
+
+    Normalize(&elevationMap->base);
+
+    // attentuation should not break normalization
+    eIt = elevationMap->base.data;
+    Coord c;
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++eIt)
+            *eIt *= GetAttenuationFactor(dim, c);
+
+    elevationMap->seaLevelThreshold = FindThresholdFromPercent(&elevationMap->base, 1.0 - gSettings.landPercent, false);
+}
+
+// TODO: no lambdas
+ElevationMap* lambdaMap;
+
+void FillInLakes(ElevationMap* map)
+{
+    lambdaMap = map;
+    PWAreaMap areaMap;
+    InitPWAreaMap(&areaMap, map->base.dim, map->base.wrapX, map->base.wrapY);
+    DefineAreas(&areaMap, [](Coord c) {return IsBelowSeaLevel(lambdaMap, c); }, false);
+
+    PWArea* it = areaMap.areaList;
+    PWArea* end = it + map->base.length;
+
+    for (; it < end; ++it)
+        if (it->trueMatch && it->size < gSettings.minOceanSize)
+            for (uint32 i = 0; i < areaMap.base.length; ++i)
+                if (areaMap.base.data[i] == it->ind)
+                    map->base.data[i] == map->seaLevelThreshold;
+}
+
+void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinter, FloatMap* outTemp)
+{
+    Dim dim = map->base.dim;
+    float64 reducedWidth = (uint32)floor(dim.w / 8.0);
+    Coord c;
+
+    FloatMap aboveSeaLevelMap;
+    InitFloatMap(&aboveSeaLevelMap, dim, map->base.wrapX, map->base.wrapY);
+    float64* it = aboveSeaLevelMap.data;
+    float64* eIt = map->base.data;
+    //float64* end = it + aboveSeaLevelMap.length;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++it, ++eIt)
+        {
+            if (IsBelowSeaLevel(map, c))
+                *it = 0.0;
+            else
+                *it = *eIt - map->seaLevelThreshold;
+        }
+
+    Normalize(&aboveSeaLevelMap);
+
+    FloatMap* summerMap = outSummer;
+    InitFloatMap(summerMap, dim, map->base.wrapX, map->base.wrapY);
+    float64 zenith = gSettings.tropicLatitudes;
+    float64 topTempLat = gSettings.topLatitude + zenith;
+    float64 bottomTempLat = gSettings.bottomLatitude;
+    float64 latRange = topTempLat - bottomTempLat;
+    it = summerMap->data;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        float64 lat = GetLatitudeForY(summerMap, c.y);
+        float64 latPercent = (lat - bottomTempLat) / latRange;
+        float64 temp = sin(latPercent * M_PI * 2 - M_PI_2) * 0.5 + 0.5;
+        float64 tempAlt = temp * gSettings.maxWaterTemp + gSettings.minWaterTemp;
+
+        for (c.x = 0; c.x < dim.w; ++c.x, ++it)
+            *it = IsBelowSeaLevel(map, c) ? tempAlt : temp;
+    }
+
+    Smooth(summerMap, reducedWidth);
+    Normalize(summerMap);
+
+    FloatMap* winterMap = outWinter;
+    InitFloatMap(winterMap, dim, map->base.wrapX, map->base.wrapY);
+    zenith = -gSettings.tropicLatitudes;
+    topTempLat = gSettings.topLatitude;
+    bottomTempLat = gSettings.bottomLatitude + zenith;
+    latRange = topTempLat - bottomTempLat;
+    it = winterMap->data;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        float64 lat = GetLatitudeForY(winterMap, c.y);
+        float64 latPercent = (lat - bottomTempLat) / latRange;
+        float64 temp = sin(latPercent * M_PI * 2 - M_PI_2) * 0.5 + 0.5;
+        float64 tempAlt = temp * gSettings.maxWaterTemp + gSettings.minWaterTemp;
+
+        for (c.x = 0; c.x < dim.w; ++c.x, ++it)
+            *it = IsBelowSeaLevel(map, c) ? tempAlt : temp;
+    }
+
+    Smooth(winterMap, reducedWidth);
+    Normalize(winterMap);
+
+    FloatMap* temperatureMap = outTemp;
+    InitFloatMap(temperatureMap, dim, map->base.wrapX, map->base.wrapY);
+    it = temperatureMap->data;
+    float64* end = it + map->base.length;
+    float64* sIt = summerMap->data;
+    float64* wIt = winterMap->data;
+    float64* aIt = aboveSeaLevelMap.data;
+
+    for (; it < end; ++it, ++sIt, ++wIt, ++aIt)
+        *it = (*wIt + *sIt) * (1.0 - *aIt);
+
+    Normalize(temperatureMap);
+    ExitFloatMap(&aboveSeaLevelMap);
+}
+
+void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp)
+{
+    Dim dim = map->base.dim;
+    Coord c;
+
+    FloatMap summerMap, winterMap;
+    FloatMap* temperatureMap = outTemp;
+    GenerateTempMaps(map, &summerMap, &winterMap, temperatureMap);
+
+    FloatMap geoMap;
+    InitFloatMap(&geoMap, dim, map->base.wrapX, map->base.wrapY);
+    float64* it = geoMap.data;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+    {
+        float64 lat = GetLatitudeForY(&map->base, c.y);
+        float64 pressure = GetGeostrophicPressure(&map->base, lat);
+
+        for (c.x = 0; c.x < dim.w; ++c.x, ++it)
+            *it = pressure;
+    }
+
+    Normalize(&geoMap);
+
+    // Create sorted summer map
+    RefMap* sortedSummerMap = (RefMap*)malloc(map->base.length * sizeof(RefMap));
+    RefMap* sIns = sortedSummerMap;
+    float64* sIt = geoMap.data;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++sIns, ++sIt)
+            *sIns = { c, *sIt };
+
+    std::sort(sortedSummerMap, sIns, [](RefMap* a, RefMap* b) { a->val < b->val; });
+
+    // Create sorted winter map
+    RefMap* sortedWinterMap = (RefMap*)malloc(map->base.length * sizeof(RefMap));
+    RefMap* wIns = sortedWinterMap;
+    float64* wIt = geoMap.data;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++wIns, ++wIt)
+            *wIns = { c, *wIt };
+
+    std::sort(sortedWinterMap, wIns, [](RefMap* a, RefMap* b) { a->val < b->val; });
+
+    RefMap* sortedGeoMap = (RefMap*)malloc(map->base.length * sizeof(RefMap));
+    uint32 geoIndex = 0;
+
+    for (uint32 w = wNPolar; w <= wSPolar; ++w)
+    {
+        uint16 topY = GetYFromZone(&map->base, (WindZone)w, true);
+        uint16 bottomY = GetYFromZone(&map->base, (WindZone)w, false);
+
+        if (topY != UINT16_MAX || bottomY != UINT16_MAX)
+        {
+            if (topY == UINT16_MAX)
+                topY = dim.h - 1;
+            if (bottomY == UINT16_MAX)
+                bottomY = 0;
+            std::pair<Dir, Dir> dir = GetGeostrophicWindDirections((WindZone)w);
+
+            uint32 xStart = 0, xStart = 0, xStop = 0, yStart = 0, yStop = 0;
+            int32 incX = 0, incY = 0;
+
+            if (dir.first == dSW || dir.first == dSE)
+            {
+                yStart = topY;
+                yStop = bottomY;
+                incY = -1;
+            }
+			else
+            {
+                yStart = bottomY;
+				yStop = topY;
+                incY = 1;
+            }
+            
+            if (dir.second == dW)
+            {
+                xStart = dim.w - 1;
+                xStop = 0;
+                incX = -1;
+            }
+            else
+            {
+                xStart = 0;
+                xStop = dim.w;
+                incX = 1;
+            }
+
+            Coord c;
+
+            for (c.y = yStart; c.y <= yStop; c.y += incY)
+            {
+                c.x = xStart;
+                uint32 xEnd = xStop;
+                // each line should start on water to avoid vast areas without rain
+                for (; c.x <= xStop; c.x += incX)
+                {
+                    if (IsBelowSeaLevel(map, c))
+                    {
+                        xEnd = c.x + dim.w * incX;
+                    }
+                }
+
+                xEnd -= incX;
+
+                for (; c.x < xEnd; c.x += incX)
+                {
+                    uint32 i = GetIndex(&map->base, c);
+                    assert(geoIndex < map->base.length);
+                    sortedGeoMap[geoIndex] = { c, geoMap.data[i] };
+                    ++geoIndex;
+                }
+            }
+        }
+    }
+
+    FloatMap rainfallSummerMap;
+    InitFloatMap(&rainfallSummerMap, dim, map->base.wrapX, map->base.wrapY);
+    FloatMap moistureMap;
+    InitFloatMap(&moistureMap, dim, map->base.wrapX, map->base.wrapY);
+    RefMap* sumIt = sortedSummerMap;
+    RefMap* sumEnd = sIns;
+
+    for (; sumIt < sumEnd; ++sumIt)
+        DistributeRain(sumIt->c, map, temperatureMap, &summerMap, &rainfallSummerMap, &moistureMap, false);
+
+    FloatMap rainfallWinterMap;
+    InitFloatMap(&rainfallWinterMap, dim, map->base.wrapX, map->base.wrapY);
+    FloatMap moistureMap2;
+    InitFloatMap(&moistureMap2, dim, map->base.wrapX, map->base.wrapY);
+    RefMap* winIt = sortedWinterMap;
+    RefMap* winEnd = wIns;
+
+    for (; winIt < winEnd; ++winIt)
+        DistributeRain(winIt->c, map, temperatureMap, &winterMap, &rainfallWinterMap, &moistureMap2, false);
+
+    FloatMap rainfallGeostrophicMap;
+    InitFloatMap(&rainfallGeostrophicMap, dim, map->base.wrapX, map->base.wrapY);
+    FloatMap moistureMap3;
+    InitFloatMap(&moistureMap3, dim, map->base.wrapX, map->base.wrapY);
+    RefMap* geoIt = sortedGeoMap;
+    RefMap* geoEnd = sortedGeoMap + geoIndex;
+
+    for (; geoIt < geoEnd; ++geoIt)
+        DistributeRain(geoIt->c, map, temperatureMap, &geoMap, &rainfallGeostrophicMap, &moistureMap3, true);
+
+    float64* rsIt = rainfallSummerMap.data;
+    float64* rwIt = rainfallWinterMap.data;
+    float64* rgIt = rainfallGeostrophicMap.data;
+
+    // zero below sea level for proper percent threshold finding
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++rsIt, ++rwIt, ++rgIt)
+            if (IsBelowSeaLevel(map, c))
+            {
+                *rsIt = 0.0;
+                *rwIt = 0.0;
+                *rgIt = 0.0;
+            }
+
+    Normalize(&rainfallSummerMap);
+    Normalize(&rainfallWinterMap);
+    Normalize(&rainfallGeostrophicMap);
+
+    FloatMap* rainfallMap = outRain;
+    InitFloatMap(rainfallMap, dim, map->base.wrapX, map->base.wrapY);
+    float64* rIns = rainfallMap->data;
+    float64* rEnd = rIns + map->base.length;
+    float64* rsIt = rainfallSummerMap.data;
+    float64* rwIt = rainfallWinterMap.data;
+    float64* rgIt = rainfallGeostrophicMap.data;
+    for (; rIns < rEnd; ++rIns, ++rsIt, ++rwIt, ++rgIt)
+        *rIns = *rsIt + *rwIt + (*rgIt * gSettings.geostrophicFactor);
+
+    Normalize(rainfallMap);
+
+    ExitFloatMap(&moistureMap3);
+    ExitFloatMap(&rainfallGeostrophicMap);
+    ExitFloatMap(&moistureMap2);
+    ExitFloatMap(&rainfallWinterMap);
+    ExitFloatMap(&moistureMap);
+    ExitFloatMap(&rainfallSummerMap);
+    free(sortedGeoMap);
+    free(sortedWinterMap);
+    free(sortedSummerMap);
+    ExitFloatMap(&geoMap);
+    ExitFloatMap(&winterMap);
+    ExitFloatMap(&summerMap);
+}
+
+void DistributeRain(Coord c, ElevationMap * map, FloatMap * temperatureMap, 
+    FloatMap * pressureMap, FloatMap* rainfallMap, FloatMap* moistureMap, bool isGeostrophic)
+{
+    uint32 i = GetIndex(&map->base, c);
+    float64 temp = temperatureMap->data[i];
+    float64 pressure = pressureMap->data[i];
+
+    float64 upLiftSource = std::max(std::pow(pressure, gSettings.upLiftExponent), 1.0 - temp);
+
+    if (IsBelowSeaLevel(map, c))
+        moistureMap->data[i] = std::max(moistureMap->data[i], temp);
+
+    uint32 nList[6];
+    uint32 ins = 0;
+    WindZone zone = GetZone(&map->base, c.y);
+
+    if (isGeostrophic)
+    {
+        std::pair<Dir, Dir> dir = GetGeostrophicWindDirections(zone);
+        Coord n;
+        GetNeighbor(&map->base, c, dir.first, &n);
+        uint32 ii = GetIndex(&map->base, n);
+
+        if (ii < map->base.length && zone == GetZone(&map->base, n.y))
+        {
+            nList[ins] = ii;
+            ++ins;
+        }
+
+        GetNeighbor(&map->base, c, dir.second, &n);
+        ii = GetIndex(&map->base, n);
+
+        if (ii < map->base.length && zone == GetZone(&map->base, n.y))
+        {
+            nList[ins] = ii;
+            ++ins;
+        }
+    }
+    else
+    {
+        for (uint32 dir = dW; dir <= dSW; ++dir)
+        {
+            Coord n;
+            GetNeighbor(&map->base, c, (Dir)dir, &n);
+            uint32 ii = GetIndex(&map->base, n);
+
+            if (ii < map->base.length && pressure <= pressureMap->data[ii])
+            {
+                nList[ins] = ii;
+                ++ins;
+            }
+        }
+    }
+
+    if (ins == 0 || (isGeostrophic && ins == 1))
+    {
+        rainfallMap->data[i] = moistureMap->data[i];
+        return;
+    }
+
+    float64 moisturePerNeighbor = moistureMap->data[i] / ins;
+
+    // drop rain and pass moisture to neighbors
+    uint32* it = nList;
+    uint32* end = nList + ins;
+    float64 bonus = 0.0;
+    if (zone == wNPolar || zone == wSPolar)
+        bonus = gSettings.polarRainBoost;
+
+    for (; it < end; ++it)
+    {
+        float64 upLiftDest = std::max(std::pow(pressureMap->data[*it], gSettings.upLiftExponent), 1.0 - temperatureMap->data[*it]);
+        float64 cost = GetRainCost(upLiftSource, upLiftDest);
+
+        if (isGeostrophic)
+        {
+            if (it == nList)
+                moisturePerNeighbor = (1.0 - gSettings.geostrophicLateralWindStrength) * moistureMap->data[i];
+            else
+                moisturePerNeighbor = gSettings.geostrophicLateralWindStrength * moistureMap->data[i];
+        }
+
+        rainfallMap->data[i] += cost * moisturePerNeighbor + bonus;
+
+        // pass to neighbor
+        moistureMap->data[*it] += moisturePerNeighbor - (cost * moisturePerNeighbor);
+    }
+}
+
+float64 GetRainCost(float64 upLiftSource, float64 upLiftDest)
+{
+    float64 cost = gSettings.minimumRainCost;
+    if (upLiftDest > upLiftSource)
+        cost += upLiftDest - upLiftSource;
+    return cost < 0.0 ? 0.0 : cost;
+}
+
+float64 GetDifferenceAroundHex(ElevationMap* map, Coord c)
+{
+    float64 avg = GetAverageInHex(&map->base, c, 1);
+    uint32 i = GetIndex(&map->base, c);
+    return map->base.data[i] - avg;
+}
+
+void PlacePossibleOasis(FloatMap * map, uint32 i, Coord c)
+{
+    MapTile* plot = gMap + i;
+
+    if (plot->terrain == tDESERT)
+    {
+        // too many oasis clustered together looks bad
+        // reject if within 3 tiles of another oasis
+        Coord* coords;
+        uint32 len = GetRadiusAroundHex(map, c, 3, &coords);
+        Coord* it = coords;
+        Coord* end = it + len;
+        char const* name = "Hellow "   "World.";
+
+        for (; it < end; ++it)
+        {
+            uint32 ind = (map->dim.w * it->y) + it->x;
+            if (gMap[ind].feature == fOASIS)
+            {
+                free(coords);
+                return;
+            }
+        }
+
+        free(coords);
+
+        len = GetRadiusAroundHex(map, c, 1, &coords);
+        it = coords;
+        end = it + len;
+
+        for (; it < end; ++it)
+        {
+            uint32 ind = (map->dim.w * it->y) + it->x;
+            MapTile* nPlot = gMap + ind;
+            if (nPlot->feature != fNONE ||
+                nPlot->terrain < tDESERT ||
+                // TODO: make mountain/hill testing smoother
+                (nPlot->terrain - tDESERT) % 5 != 0)
+            {
+                free(coords);
+                return;
+            }
+        }
+
+        free(coords);
+        plot->feature = fOASIS;
+    }
+}
+
+void PlacePossibleIce(FloatMap* tempMap, uint32 i, Coord c)
+{
+    MapTile* plot = gMap + i;
+
+    if (IsWater(plot))
+    {
+        float64 temp = tempMap->data[i];
+        float64 latitude = GetLatitudeForY(tempMap, c.y);
+        float64 randvalNorth = PWRand() * (gSettings.iceNorthLatitudeLimit - gSettings.topLatitude) + gSettings.topLatitude - 2;
+        float64 randvalSouth = PWRand() * (gSettings.bottomLatitude - gSettings.iceSouthLatitudeLimit) + gSettings.iceSouthLatitudeLimit;
+
+        if (latitude > randvalNorth || latitude < randvalSouth)
+            plot->feature = fICE;
+    }
+}
+
+void PlacePossibleReef(FloatMap* tempMap, uint32 i, Coord c)
+{
+    MapTile* plot = gMap + i;
+
+    if (IsWater(plot) &&
+        plot->feature == fNONE &&
+        plot->resource == rNONE &&
+        true // TODO: TerrainBuilder.CanHaveFeature(..., fREEF)
+        )
+    {
+        if (PWRand() < gSettings.maxReefChance)
+            plot->feature = fREEF;
+    }
+}
+
+void AddTerrainFromContinents()
+{
+
+}
+
 void ApplyVolcanoBump() {}
 void ApplyTerrain() {}
-void GeneratePlotTypes() {}
+
+uint32 GeneratePlotTypes(Dim dim, uint8 ** out)
+{
+    uint32_t len = dim.w * dim.h;
+
+    PWRandSeed();
+
+    ElevationMap eMap;
+    GenerateElevationMap(dim, true, false, &eMap);
+    FillInLakes(&eMap);
+
+    FloatMap rainfallMap, temperatureMap;
+    GenerateRainfallMap(&eMap, &rainfallMap, &temperatureMap);
+
+    FloatMap diffMap;
+    InitFloatMap(&diffMap, dim, true, false);
+    Coord c;
+    float64* ins = diffMap.data;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++ins)
+            if (IsBelowSeaLevel(&eMap, c))
+                *ins = 0.0;
+            else
+                *ins = GetDifferenceAroundHex(&eMap, c);
+
+    Normalize(&diffMap);
+
+    ins = diffMap.data;
+    float64* eIt = eMap.base.data;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++ins, ++eIt)
+            if (!IsBelowSeaLevel(&eMap, c))
+                *ins += *eIt * 1.1;
+
+    Normalize(&diffMap);
+
+    float64 hillsThreshold = FindThresholdFromPercent(&diffMap, gSettings.hillsPercent, true);
+    float64 mountainsThreshold = FindThresholdFromPercent(&diffMap, gSettings.mountainsPercent, true);
+
+    uint8* plotTypes = (uint8*)malloc(sizeof * plotTypes * len);
+    uint8* pIns = plotTypes;
+    float64* dIt = diffMap.data;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++pIns, ++dIt)
+            if (IsBelowSeaLevel(&eMap, c))
+                *pIns = ptOcean;
+            else if (*dIt < hillsThreshold)
+                *pIns = ptLand;
+            else if (*dIt < mountainsThreshold)
+                *pIns = ptHills;
+            else
+                *pIns = ptMountain;
+
+    // TODO: see if above maps are still needed
+
+    return len;
+}
+
 void GenerateTerrain() {}
 void FinalAlterations() {}
 void GenerateCoasts() {}
@@ -2640,7 +3258,6 @@ void IsAdjacentToCoast() {}
 // --- Generation Functions ---------------------------------------------------
 
 void AddFeatures() {}
-void GetDirectionString() {}
 void AddRivers() {}
 void ClearFloodPlains() {}
 void GetRiverSidesForJunction() {}
