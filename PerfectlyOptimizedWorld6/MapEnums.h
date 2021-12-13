@@ -319,8 +319,8 @@ enum TileFlowDirection
 
 #undef TERRAIN_TYPES
 #define TERRAIN_TYPES                \
-    CONVERT(COAST)           \
     CONVERT(OCEAN)           \
+    CONVERT(COAST)           \
     CONVERT(DESERT)          \
     CONVERT(GRASS)           \
     CONVERT(PLAINS)          \
@@ -354,12 +354,12 @@ enum Terrain
 
     tNum,
 
-    tWaterStart = tCOAST,
-    tWaterEnd = tOCEAN + 1,
+    tWaterStart = tOCEAN,
+    tWaterEnd = tCOAST + 1,
     tLandStart = tDESERT,
     tLandEnd = tTUNDRA_MOUNTAIN + 1,
 
-    tBaseStart = tCOAST,
+    tBaseStart = tOCEAN,
     tBaseEnd = tTUNDRA + 1,
     tHillsStart = tDESERT_HILLS,
     tHillsEnd = tTUNDRA_HILLS + 1,
