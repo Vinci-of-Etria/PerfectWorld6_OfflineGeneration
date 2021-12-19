@@ -71,6 +71,7 @@ struct PWAreaMap
 {
     FloatMap base;
 
+    // same length as map
     PWArea* areaList;
     std::vector<LineSeg> segStack;
 };
@@ -117,6 +118,7 @@ struct RiverMap
 };
 
 typedef bool (*Match)(Coord);
+typedef bool (*MatchI)(uint32);
 
 struct LakeDataUtil
 {
@@ -130,6 +132,27 @@ struct RefMap
 {
     Coord c;
     float64 val;
+};
+
+struct PangaeaBreaker
+{
+    ElevationMap* map;
+    PWAreaMap areaMap;
+    uint8* terrainTypes;
+    float64 oldWorldPercent;
+
+    uint32* distanceMap;
+
+    bool* newWorld;
+    bool* newWorldMap;
+};
+
+struct CentralityScore
+{
+    ElevationMap* map;
+    Coord c;
+    uint32 centrality;
+    std::vector<uint32> neighborList;
 };
 
 
@@ -336,7 +359,6 @@ void GrowLake(RiverMap* map, RiverHex* lakeHex, uint32 lakeSize, LakeDataUtil* l
 RiverJunction* GetLowestJunctionAroundHex(RiverMap* map, RiverHex* lakeHex);
 std::vector<FlowDir> GetValidFlows(RiverMap* map, RiverJunction* junc);
 void SetOutflowForLakeHex(RiverMap* map, RiverHex* lakeHex, RiverJunction* outflow);
-std::vector<uint32> GetRadiusAroundCell(Coord c);
 RiverJunction* GetNextJunctionInFlow(RiverMap* map, RiverJunction* junc);
 void InitRiver(River* river, RiverJunction* sourceJunc, uint32 rawID);
 void Add(River* river, RiverJunction* junc);
@@ -658,7 +680,7 @@ void ExitFloatMap(FloatMap* map)
     free(map->data);
 }
 
-void GetNeighbor(FloatMap * map, Coord coord, Dir dir, Coord * out)
+void GetNeighbor(FloatMap *, Coord coord, Dir dir, Coord * out)
 {
     // TODO: precalculate offsets on map generation so there is no branching
     uint16 odd = coord.y % 2;
@@ -1199,6 +1221,11 @@ bool IsBelowSeaLevel(ElevationMap* map, uint32 i)
     return map->base.data[i] < map->seaLevelThreshold;
 }
 
+bool IsBelowSeaLevel(ElevationMap* map, uint32 i)
+{
+    return map->base.data[i] < map->seaLevelThreshold;
+}
+
 // --- AreaMap
 
 void InitPWAreaMap(PWAreaMap* map, Dim dim, bool xWrap, bool yWrap)
@@ -1220,7 +1247,7 @@ void Clear(PWAreaMap* map)
     memset(map->base.data, 0, map->base.length * sizeof(float64));
 }
 
-void DefineAreas(PWAreaMap* map, Match mFunc, bool bDebug)
+void DefineAreas(PWAreaMap* map, MatchI mFunc, bool bDebug)
 {
     Clear(map);
 
@@ -1232,19 +1259,20 @@ void DefineAreas(PWAreaMap* map, Match mFunc, bool bDebug)
     Coord c;
     //float64* it = map->base.data;
     PWArea* it = map->areaList;
+    uint32 i = 0;
 
     for (c.y = 0; c.y < map->base.dim.h; ++c.y)
-        for (c.x = 0; c.x < map->base.dim.w; ++c.x, ++it)
+        for (c.x = 0; c.x < map->base.dim.w; ++c.x, ++it, ++i)
         {
             ++currentAreaID;
-            InitPWArea(it, currentAreaID, c, mFunc(c));
+            InitPWArea(it, currentAreaID, c, mFunc(i));
             it->debug = bDebug;
 
             FillArea(map, c, it, mFunc);
         }
 }
 
-void FillArea(PWAreaMap* map, Coord c, PWArea* area, Match mFunc)
+void FillArea(PWAreaMap* map, Coord c, PWArea* area, MatchI mFunc)
 {
     map->segStack.resize(2);
     InitLineSeg(&map->segStack[0], c.y, c.x, c.x, 1);
@@ -1260,7 +1288,7 @@ void FillArea(PWAreaMap* map, Coord c, PWArea* area, Match mFunc)
 
 // TODO: clean up, this is quite the mess for a scanline function
 // TODO: we do all this work and nothing happens? maybe the mFunc in the print is important
-void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, Match mFunc)
+void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc)
 {
     uint16 dy = seg.y + seg.dy;
     if (ValidateY(map, seg.y + seg.dy) == -1)
@@ -1282,7 +1310,7 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, Match mFunc)
         c.y = ValidateY(map, dy);
         uint32 i = GetIndex(&map->base, c);
 
-        if (map->base.data[i] == 0 || area->trueMatch == mFunc(c))
+        if (map->base.data[i] == 0 || area->trueMatch == mFunc(i))
         {
             map->base.data[i] = area->ind;
             ++area->size;
@@ -1313,7 +1341,7 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, Match mFunc)
         c.y = ValidateY(map, dy);
         uint32 i = GetIndex(&map->base, c);
 
-        if (map->base.data[i] == 0 || area->trueMatch == mFunc(c))
+        if (map->base.data[i] == 0 || area->trueMatch == mFunc(i))
         {
             map->base.data[i] = area->ind;
             ++area->size;
@@ -1859,7 +1887,7 @@ void GrowLake(RiverMap* map, RiverHex * lakeHex, uint32 lakeSize, LakeDataUtil* 
     lakeList.push_back(lakeHex);
 
     // choose random neighbors to put on queue
-    std::vector<uint32> neighbors = GetRadiusAroundCell(lakeHex->coord);
+    std::vector<uint32> neighbors = GetRadiusAroundCell(map->eMap->base.dim, lakeHex->coord, 1);
     for (uint32 ind : neighbors)
     {
         RiverHex* neighbor = map->riverData + ind;
@@ -1924,14 +1952,14 @@ bool ValidLakeHex(RiverMap* map, RiverHex* lakeHex, LakeDataUtil* ldu)
     if (plot->feature != fNONE)
         return false;
 
-    std::vector<uint32> cellList = GetRadiusAroundCell(lakeHex->coord);
+    std::vector<uint32> cellList = GetRadiusAroundCell(map->eMap->base.dim, lakeHex->coord, 1);
     for (uint32 i : cellList)
     {
         RiverHex* nHex = map->riverData + i;
 
         if (map->eMap->base.data[i] < map->eMap->seaLevelThreshold)
             return false;
-        else if (nHex->lakeID != -1 && nHex->lakeID != ldu->currentLakeSize)
+        else if (nHex->lakeID != UINT32_MAX && nHex->lakeID != ldu->currentLakeSize)
             return false;
     }
 
@@ -2443,7 +2471,7 @@ void InitRiverHex(RiverHex* hex, Coord c)
     hex->coord = c;
     InitRiverJunction(&hex->northJunction, c, true);
     InitRiverJunction(&hex->southJunction, c, false);
-    hex->lakeID = -1;
+    hex->lakeID = UINT32_MAX;
     hex->rainfall = 0.0;
 }
 
@@ -2533,6 +2561,7 @@ void GenerateMap(Dim dim)
     ElevationMap map;
     FloatMap rainMap;
     FloatMap tempMap;
+    PangaeaBreaker pb;
 
     uint32 iter = 0;
 
@@ -2543,12 +2572,12 @@ void GenerateMap(Dim dim)
         FinalAlterations(&map, plotTypes, terrainTypes);
         GenerateCoasts(&map, plotTypes, terrainTypes);
 
-        // TODO: Pangea Breaker
-        //pb = PangaeaBreaker:New()
-        //if pb:breakPangaeas(plotTypes, terrainTypes)
-        //    break
+        InitPangaeaBreaker(&pb, &map, terrainTypes);
+        if (BreakPangaeas(&pb, plotTypes, terrainTypes))
+            break;
 
         // TODO: don't be this destructive
+        ExitPangaeaBreaker(&pb);
         ExitFloatMap(&tempMap);
         ExitFloatMap(&rainMap);
         ExitFloatMap(&map.base);
@@ -2560,7 +2589,7 @@ void GenerateMap(Dim dim)
         return;
     }
 
-    //TODO: pb:createNewWorldMap()
+    CreateNewWorldMap(&pb);
 
     ApplyTerrain(len, plotTypes, terrainTypes);
 
@@ -2589,8 +2618,8 @@ void GenerateMap(Dim dim)
     CreateRiverList(&riverMap);
     AssignRiverIDs(&riverMap);
 
-    AddLakes();
-    AddRivers();
+    AddLakes(&riverMap);
+    AddRivers(&riverMap);
 
     // TODO: ? maybe not
     //AreaBuilder.Recalculate()
@@ -2610,7 +2639,7 @@ void GenerateMap(Dim dim)
     // TODO: add expansion filters (Gathering Storm)
     //if Gathering Storm
     {
-        ClearFloodPlains();
+        ClearFloodPlains(&riverMap);
         uint32 iMinFloodplainSize = 2;
         uint32 iMaxFloodplainSize = 12;
         // TODO:
@@ -2898,7 +2927,7 @@ void FillInLakes(ElevationMap* map)
     lambdaMap = map;
     PWAreaMap areaMap;
     InitPWAreaMap(&areaMap, map->base.dim, map->base.wrapX, map->base.wrapY);
-    DefineAreas(&areaMap, [](Coord c) {return IsBelowSeaLevel(lambdaMap, c); }, false);
+    DefineAreas(&areaMap, [](uint32 i) {return IsBelowSeaLevel(lambdaMap, i); }, false);
 
     PWArea* it = areaMap.areaList;
     PWArea* end = it + map->base.length;
@@ -3716,53 +3745,641 @@ void AddFeatures(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap)
 }
 
 // TODO:
-void AddRivers()
+void AddRivers(RiverMap * map)
 {
+    River* river = map->rivers;
+    River* end = river + map->riverCnt;
+    RiverHex* riverHex;
+    // TODO: set ref value on tile itself
+    uint8* checklist = (uint8*)calloc(map->eMap->base.length, sizeof uint8);
 
+    for (; river < end; ++river)
+        for (RiverJunction* junc : river->junctions)
+            if (riverHex = GetRiverHexForJunction(map, junc))
+            {
+                uint32_t i = GetIndex(&map->eMap->base, riverHex->coord);
+
+                if (!checklist[i])
+                {
+                    MapTile* plot = gMap + i;
+
+                    FlowDirRet data = GetFlowDirections(map, riverHex->coord);
+
+                    if (data.id != UINT32_MAX && river->riverID == data.id)
+                    {
+                        checklist[i] = true;
+                        if (data.WOfRiver != tfdNO_FLOW)
+                        {
+                            plot->isWOfRiver = 1;
+                            // TODO: flow dir
+                            // my guess is this is only locked in if there is an adjacent tile
+                        }
+                        if (data.NWOfRiver != tfdNO_FLOW)
+                        {
+                            plot->isNWOfRiver = 1;
+                            // TODO: flow dir
+                        }
+                        if (data.NEOfRiver != tfdNO_FLOW)
+                        {
+                            plot->isNEOfRiver = 1;
+                            // TODO: flow dir
+                        }
+                    }
+                }
+            }
+
+    free(checklist);
 }
 
-void ClearFloodPlains() {}
-void GetRiverSidesForJunction() {}
-void AddLakes() {}
-std::vector<uint32> GetRadiusAroundCell(Coord c) { return {}; }
-void GetRingAroundCell() {}
+void ClearFloodPlains(RiverMap* map)
+{
+    River* river = map->rivers;
+    // only do the largest percent of rivers
+    River* end = river + (uint32)(map->riverCnt * gSet.percentRiversFloodplains);
+
+    for (; river < end; ++river)
+    {
+        // flood the bottom half
+        auto jIt = river->junctions.begin() + (uint32)(river->junctions.size() * 0.5f);
+        auto jEnd = river->junctions.end();
+
+        for (; jIt < jEnd; ++jIt)
+        {
+            RiverJunction* junc = *jIt;
+            MapTile* plot0, * plot1;
+            GetRiverSidesForJunction(map, junc, &plot0, &plot1);
+
+            if (plot0)
+            {
+                if (plot0->terrain < tHillsStart &&
+                    plot0->feature == fFOREST ||
+                    plot0->feature == fJUNGLE ||
+                    plot0->feature == fMARSH ||
+                    plot0->feature == fFLOODPLAINS)
+                    plot0->feature = fNONE;
+                if (plot1->terrain < tHillsStart &&
+                    plot1->feature == fFOREST ||
+                    plot1->feature == fJUNGLE ||
+                    plot1->feature == fMARSH ||
+                    plot1->feature == fFLOODPLAINS)
+                    plot1->feature = fNONE;
+            }
+        }
+    }
+}
+
+void GetRiverSidesForJunction(RiverMap* map, RiverJunction* junc, MapTile** out0, MapTile** out1)
+{
+    RiverHex* hex0, * hex1;
+
+    switch (junc->flow)
+    {
+    case fdVert:
+        hex0 = GetRiverHexNeighbor(map, junc, true);
+        hex1 = GetRiverHexNeighbor(map, junc, false);
+        break;
+    case fdEast:
+        hex0 = map->riverData + GetIndex(&map->eMap->base, junc->coord);
+        hex1 = GetRiverHexNeighbor(map, junc, false);
+        break;
+    case fdWest:
+        hex0 = GetRiverHexNeighbor(map, junc, true);
+        hex1 = map->riverData + GetIndex(&map->eMap->base, junc->coord);
+        break;
+    default:
+        *out0 = NULL;
+        *out1 = NULL;
+        return;
+    }
+
+    *out0 = gMap + GetIndex(&map->eMap->base, hex0->coord);
+    *out1 = gMap + GetIndex(&map->eMap->base, hex1->coord);
+}
+
+void AddLakes(RiverMap* map)
+{
+    RiverHex* it = map->riverData;
+    RiverHex* end = it + map->eMap->base.length;
+    MapTile* ins = gMap;
+
+    for (; it < end; ++it, ++ins)
+        if (it->lakeID != UINT32_MAX)
+            ins->terrain = tCOAST;
+}
+
+std::vector<uint32> GetRadiusAroundCell(Dim dim, Coord c, uint32 rad)
+{
+    std::vector<uint32> cellList;
+
+    for (uint32 r = 1; r <= rad; ++r)
+    {
+        // move here 1 West
+        GetNeighbor(NULL, c, dW, &c);
+
+        for (uint32 i = 0; i < r; ++i)
+        {
+            GetNeighbor(NULL, c, dNE, &c);
+            if (c.x < dim.w && c.y < dim.h)
+                cellList.push_back((uint32)c.y * dim.w + c.x);
+        }
+
+        for (uint32 i = 0; i < r; ++i)
+        {
+            GetNeighbor(NULL, c, dE, &c);
+            if (c.x < dim.w && c.y < dim.h)
+                cellList.push_back((uint32)c.y * dim.w + c.x);
+        }
+
+        for (uint32 i = 0; i < r; ++i)
+        {
+            GetNeighbor(NULL, c, dSE, &c);
+            if (c.x < dim.w && c.y < dim.h)
+                cellList.push_back((uint32)c.y * dim.w + c.x);
+        }
+
+        for (uint32 i = 0; i < r; ++i)
+        {
+            GetNeighbor(NULL, c, dSW, &c);
+            if (c.x < dim.w && c.y < dim.h)
+                cellList.push_back((uint32)c.y * dim.w + c.x);
+        }
+
+        for (uint32 i = 0; i < r; ++i)
+        {
+            GetNeighbor(NULL, c, dW, &c);
+            if (c.x < dim.w && c.y < dim.h)
+                cellList.push_back((uint32)c.y * dim.w + c.x);
+        }
+
+        for (uint32 i = 0; i < r; ++i)
+        {
+            GetNeighbor(NULL, c, dNW, &c);
+            if (c.x < dim.w && c.y < dim.h)
+                cellList.push_back((uint32)c.y * dim.w + c.x);
+        }
+    }
+
+    return cellList;
+}
+
+std::vector<uint32> GetRingAroundCell(Dim dim, Coord c, uint32 rad)
+{
+    std::vector<uint32> cellList;
+
+    for (uint32 i = 0; i < rad; ++i)
+        GetNeighbor(NULL, c, dW, &c);
+
+    for (uint32 i = 0; i < rad; ++i)
+    {
+        GetNeighbor(NULL, c, dNE, &c);
+        if (c.x < dim.w && c.y < dim.h)
+            cellList.push_back((uint32)c.y * dim.w + c.x);
+    }
+
+    for (uint32 i = 0; i < rad; ++i)
+    {
+        GetNeighbor(NULL, c, dE, &c);
+        if (c.x < dim.w && c.y < dim.h)
+            cellList.push_back((uint32)c.y * dim.w + c.x);
+    }
+
+    for (uint32 i = 0; i < rad; ++i)
+    {
+        GetNeighbor(NULL, c, dSE, &c);
+        if (c.x < dim.w && c.y < dim.h)
+            cellList.push_back((uint32)c.y * dim.w + c.x);
+    }
+
+    for (uint32 i = 0; i < rad; ++i)
+    {
+        GetNeighbor(NULL, c, dSW, &c);
+        if (c.x < dim.w && c.y < dim.h)
+            cellList.push_back((uint32)c.y * dim.w + c.x);
+    }
+
+    for (uint32 i = 0; i < rad; ++i)
+    {
+        GetNeighbor(NULL, c, dW, &c);
+        if (c.x < dim.w && c.y < dim.h)
+            cellList.push_back((uint32)c.y * dim.w + c.x);
+    }
+
+    for (uint32 i = 0; i < rad; ++i)
+    {
+        GetNeighbor(NULL, c, dNW, &c);
+        if (c.x < dim.w && c.y < dim.h)
+            cellList.push_back((uint32)c.y * dim.w + c.x);
+    }
+
+    return cellList;
+}
 
 
 // --- Generation Functions ---------------------------------------------------
 
-void isNonCoastWaterMatch() {}
-
-struct PangaeaBreaker
+void InitPangaeaBreaker(PangaeaBreaker * pb, ElevationMap* map, uint8* terrainTypes) 
 {
+    pb->map = map;
+    InitPWAreaMap(&pb->areaMap, map->base.dim, map->base.wrapX, map->base.wrapY);
+    pb->terrainTypes = terrainTypes;
+    pb->oldWorldPercent = 1.0;
 
-};
+    pb->distanceMap = (uint32*)calloc(map->base.length, sizeof(uint32));
 
-void InitPangaeaBreaker(PangaeaBreaker * brk) {}
-void BreakPangaeas(PangaeaBreaker* brk) {}
-void IsPangea(PangaeaBreaker* brk) {}
-void GetMeteorStrike(PangaeaBreaker* brk) {}
-void CastMeteorUponTheEarth(PangaeaBreaker* brk) {}
-void CreateDistanceMap(PangaeaBreaker* brk) {}
-void GetHighestCentrality(PangaeaBreaker* brk) {}
-void CreateContinentList(PangaeaBreaker* brk) {}
-void CreateCentralityList(PangaeaBreaker* brk) {}
-void CreateNewWorldMap(PangaeaBreaker* brk) {}
-void IsTileNewWorld(PangaeaBreaker* brk) {}
-void GetOldWorldPlots(PangaeaBreaker* brk) {}
+    pb->newWorld = (bool*)calloc(map->base.length, sizeof(bool));
+    pb->newWorldMap = (bool*)calloc(map->base.length, sizeof(bool));
+}
 
-struct CentralityScore
+void ExitPangaeaBreaker(PangaeaBreaker* pb)
 {
+    free(pb->newWorldMap);
+    free(pb->newWorld);
+    free(pb->distanceMap);
+    ExitPWAreaMap(&pb->areaMap);
+}
 
-};
+// TODO: rem
+uint8* ttMatch;
 
-void InitCentralityScore(CentralityScore * score) {}
-void IsCityRealEstateMatch(CentralityScore * score) {}
-void GetOldWorldPlots(CentralityScore * score) {}
-void GetNewWorldPlots(CentralityScore * score) {}
-void FilterBadStarts(CentralityScore * score) {}
+bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
+{
+    bool meteorThrown = false;
+    bool pangeaDetected = false;
+
+    ttMatch = pb->terrainTypes;
+    DefineAreas(&pb->areaMap, [](uint32 i) { return ttMatch[i] == tOCEAN; }, false);
+
+    uint32 meteorCount = 0;
+
+    if (!gSet.AllowPangeas)
+        while (IsPangea(pb) && meteorCount < maximumMeteorCount)
+        {
+            pangeaDetected = true;
+            Coord c = GetMeteorStrike(pb);
+            CastMeteorUponTheEarth(pb, c, plotTypes, terrainTypes);
+
+            meteorThrown = true;
+            ++meteorCount;
+
+            DefineAreas(&pb->areaMap, [](uint32 i) { return ttMatch[i] == tOCEAN; }, false);
+        }
+
+    if (meteorCount == maximumMeteorCount)
+        return false;
+
+    if (gSet.AllowPangeas)
+        pb->oldWorldPercent = 1.0;
+
+    return true;
+}
+
+bool IsPangea(PangaeaBreaker* pb)
+{
+    std::vector<PWArea*> continentList;
+
+    PWArea* area = pb->areaMap.areaList;
+    PWArea* end = area + pb->map->base.length;
+
+    for (; area < end; ++area)
+        if (!area->trueMatch)
+            continentList.push_back(area);
+
+    uint32 totalLand = 0;
+
+    for (PWArea* area : continentList)
+        totalLand += area->size;
+
+    // sort all the continents by size, largest first
+    std::sort(continentList.begin(), continentList.end(), [](PWArea* a, PWArea* b) { return a->size > b->size; });
+
+    uint32 biggest = continentList.front()->size;
+    pb->oldWorldPercent = biggest / (float64)totalLand;
+
+    return gSet.PangaeaSize < pb->oldWorldPercent;
+}
+
+Coord GetMeteorStrike(PangaeaBreaker* pb)
+{
+    std::vector<PWArea*> continentList;
+
+    PWArea* area = pb->areaMap.areaList;
+    PWArea* end = area + pb->map->base.length;
+
+    for (; area < end; ++area)
+        if (!area->trueMatch)
+            continentList.push_back(area);
+
+    std::sort(continentList.begin(), continentList.end(), [](PWArea* a, PWArea* b) { return a->size > b->size; });
+
+    uint32 biggest = continentList.front()->ind;
+
+    return GetHighestCentrality(pb, biggest);
+}
+
+void CastMeteorUponTheEarth(PangaeaBreaker* pb, Coord c, uint8* plotTypes, uint8* terrainTypes)
+{
+    Dim dim = pb->map->base.dim;
+    uint32 radius = PWRandInt(minimumMeteorSize + 1, (uint32)floor(dim.w / 16.0f));
+    std::vector<uint32> ringList = GetRingAroundCell(dim, c, radius);
+
+    // destroy center
+    uint32 i = GetIndex(&pb->map->base, c);
+    terrainTypes[i] = tOCEAN;
+    plotTypes[i] = ptOcean;
+    pb->map->base.data[i] = pb->map->seaLevelThreshold - 0.01;
+
+    for (i = 0; i < ringList.size(); ++i)
+    {
+        uint32 ind = ringList[i];
+        if (terrainTypes[ind] != tOCEAN)
+        {
+            terrainTypes[ind] = tCOAST;
+            pb->map->base.data[i] = pb->map->seaLevelThreshold - 0.01;
+        }
+        plotTypes[ind] = ptOcean;
+        pb->map->base.data[ind] = pb->map->seaLevelThreshold - 0.01;
+    }
+
+    std::vector<uint32> innerList = GetRadiusAroundCell(dim, c, radius - 1);
+
+    for (i = 0; i < innerList.size(); ++i)
+    {
+        uint32 ind = innerList[i];
+        terrainTypes[ind] = tOCEAN;
+        plotTypes[ind] = ptOcean;
+        pb->map->base.data[ind] = pb->map->seaLevelThreshold - 0.01;
+    }
+}
+
+// UNUSED: void CreateDistanceMap(PangaeaBreaker* pb)
+
+Coord GetHighestCentrality(PangaeaBreaker* pb, uint32 id)
+{
+    std::vector<CentralityScore> cs = CreateCentralityList(pb, id);
+    std::sort(cs.begin(), cs.end(), [](CentralityScore& a, CentralityScore& b) { return a.centrality > b.centrality; });
+    return cs.front().c;
+}
+
+// creates the sub portion of the continent to be analyzed this was meant to save processing time
+std::vector<CentralityScore> CreateContinentList(PangaeaBreaker* pb, uint32 id)
+{
+    Dim dim = pb->map->base.dim;
+    std::vector<CentralityScore> cs;
+    std::vector<uint32> indexMap;
+    uint32 cnt = 0;
+
+    float64* aID = pb->areaMap.base.data;
+    Coord c;
+
+    for (c.y = 0; c.y < dim.h; ++c.y)
+        for (c.x = 0; c.x < dim.w; ++c.x, ++aID)
+            if (*aID == id)
+            {
+                cs.push_back({});
+                InitCentralityScore(&cs.back(), pb->map, c);
+                indexMap.push_back(cnt);
+                ++cnt;
+            }
+            else
+                indexMap.push_back(-1);
+
+    for (CentralityScore& s : cs)
+    {
+        std::vector<uint32> nList = GetRadiusAroundCell(dim, s.c, 1);
+        for (uint32 i : nList)
+            if (pb->areaMap.base.data[i] == id)
+                s.neighborList.push_back(indexMap[i]);
+    }
+
+    return cs;
+}
+
+std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id)
+{
+    std::vector<CentralityScore> cs = CreateContinentList(pb, id);
+
+    std::vector<uint32> delta;
+    std::vector<uint32> sigma;
+    std::vector<int32> d;
+    std::vector<std::vector<uint32>> P;
+    std::vector<uint32> Q;
+    std::vector<uint32> S;
+
+    sigma.resize(cs.size());
+    d.resize(cs.size());
+    P.resize(cs.size());
+    delta.resize(cs.size());
+
+    for (uint32 i = 0; i < cs.size(); ++i)
+    {
+        Q.clear();
+        S.clear();
+        std::fill(sigma.begin(), sigma.end(), 0);
+        std::fill(d.begin(), d.end(), -1);
+        std::for_each(P.begin(), P.end(), [](std::vector<uint32>& list) { list.clear(); });
+        std::fill(delta.begin(), delta.end(), -1);
+
+        sigma[i] = 1;
+        d[i] = 0;
+        Q.push_back(i);
+
+        while (!Q.empty())
+        {
+            uint32 v = Q.back();
+            Q.pop_back();
+            S.push_back(v);
+
+            for (uint32 w : cs[v].neighborList)
+            {
+                if (d[w] < 0)
+                {
+                    Q.push_back(w);
+                    d[w] = d[v] + 1;
+                }
+
+                if (d[w] == d[v] + 1)
+                {
+                    sigma[w] += sigma[v];
+                    P[w].push_back(v);
+                }
+            }
+        }
+
+        while (!S.empty())
+        {
+            uint32 w = S.back();
+            S.pop_back();
+
+            for (uint32 v : P[w])
+                delta[v] += (uint32)floor(sigma[v] / (float64)sigma[w]) * (1 + delta[w]);
+
+            if (w != i)
+                cs[w].centrality += delta[w];
+        }
+
+        ++i;
+    }
+
+    return cs;
+}
+
+void CreateNewWorldMap(PangaeaBreaker* pb)
+{
+    Dim dim = pb->map->base.dim;
+
+    ttMatch = pb->terrainTypes;
+    DefineAreas(&pb->areaMap, [](uint32 i) { return ttMatch[i] == tOCEAN; }, false);
+
+    std::vector<PWArea*> continentList;
+
+    PWArea* area = pb->areaMap.areaList;
+    PWArea* aEnd = area + pb->map->base.length;
+
+    for (; area < aEnd; ++area)
+        if (!area->trueMatch)
+            continentList.push_back(area);
+
+    // sort all the continents by size, largest first
+    std::sort(continentList.begin(), continentList.end(), [](PWArea* a, PWArea* b) { return a->size > b->size; });
+
+    uint32 biggest = continentList.front()->size;
+
+    uint32 totalLand = 0;
+
+    for (PWArea* area : continentList)
+        totalLand += area->size;
+
+    std::vector<uint32> newWorldList;
+    newWorldList.push_back(continentList[1]->ind);
+    uint32 newWorldSize = continentList[1]->size;
+
+    // sort remaining continents by ID, to mix it up
+    std::sort(continentList.begin() + 2, continentList.end(), [](PWArea* a, PWArea* b) { return a->ind > b->ind; });
+
+    // add new world continents until mc.maxNewWorldSize is reached
+    for (auto it = continentList.begin() + 2; it < continentList.end(); ++it)
+    {
+        PWArea* c = *it;
+
+        if ((newWorldSize + c->size) / totalLand >= gSet.maxNewWorldSize)
+            break;
+
+        newWorldList.push_back(c->ind);
+        newWorldSize += c->size;
+    }
+
+    // first assume old world
+    memset(pb->newWorldMap, 0, pb->map->base.length * sizeof *pb->newWorldMap);
+
+    // mark new world
+    for (uint32 id : newWorldList)
+    {
+        bool* it = pb->newWorldMap;
+        bool* end = it + pb->map->base.length;
+        area = pb->areaMap.areaList;;
+        for (; it < end; ++it, ++area)
+            if (area->ind == id)
+                *it = true;
+    }
+}
+
+// UNUSED: bool IsTileNewWorld(PangaeaBreaker* pb)
+
+std::vector<uint32> GetLargeOldWorldPlots(PangaeaBreaker* pb)
+{
+    Dim dim = pb->map->base.dim;
+    bool* it = pb->newWorld;
+    bool* end = it + pb->map->base.length;
+    MapTile* plot = gMap;
+    float64* id = pb->areaMap.base.data;
+    uint32 i = 0;
+
+    std::vector<uint32> plots;
+
+    for (; it < end; ++it, ++plot, ++id, ++i)
+        if (!*it && !IsWater(plot))
+        {
+            PWArea* area = GetAreaByID(&pb->areaMap, (uint32)id);
+
+            if (area->size > 30)
+                plots.push_back(i);
+        }
+
+    return plots;
+}
+
+
+// --- CentralityScore
+
+void InitCentralityScore(CentralityScore * score, ElevationMap* map, Coord c)
+{
+    score->map = map;
+    score->c = c;
+    score->centrality = 0;
+}
+
+
+// --- Starting Plot Stuff ----------------------------------------------------
+
+bool IsCityRealEstateMatch(CentralityScore * score, Coord c)
+{
+    uint32 i = GetIndex(&score->map->base, c);
+    MapTile* plot = gMap + i;
+
+    if (plot->isImpassable || IsWater(plot))
+        return false;
+
+    // TODO:
+    uint32 dist = 0;
+    //dist = Map.GetPlotDistance(latestStartPlotIndex, i)
+
+    return dist <= 3;
+}
+
+std::vector<uint32> GetOldWorldPlots(PangaeaBreaker* pb)
+{
+    Dim dim = pb->map->base.dim;
+
+    bool* it = pb->newWorld;
+    bool* end = it + pb->map->base.length;
+    MapTile* plot = gMap;
+    uint32 i = 0;
+
+    std::vector<uint32> plots;
+
+    for (; it < end; ++it, ++plot, ++i)
+        if (!*it && !IsWater(plot))
+            plots.push_back(i);
+
+    return plots;
+}
+
+std::vector<uint32> GetNewWorldPlots(PangaeaBreaker* pb)
+{
+    Dim dim = pb->map->base.dim;
+
+    bool* it = pb->newWorld;
+    bool* end = it + pb->map->base.length;
+    MapTile* plot = gMap;
+    uint32 i = 0;
+
+    std::vector<uint32> plots;
+
+    for (; it < end; ++it, ++plot, ++i)
+        if (*it && !IsWater(plot))
+            plots.push_back(i);
+
+    return plots;
+}
 
 
 // --- AssignStartingPlots ----------------------------------------------------
+
+void FilterBadStarts(CentralityScore* score)
+{
+    std::vector<uint32> betterStarts;
+
+}
 
 void __InitStartingData() {}
 void __SetStartMajor() {}
@@ -3770,7 +4387,7 @@ void AddCliffs(uint8* plotTypes, uint8* terrainTypes) {}
 void SetCliff() {}
 
 
-// --- FeatureGenerator ----------------------------------------------------
+// --- FeatureGenerator -------------------------------------------------------
 
 void AddFeaturesFromContinents() {}
 
@@ -3782,7 +4399,7 @@ void NW_IsPassableLand() {}
 void NW_IsDesert() {}
 
 
-// --- NaturalWonderGenerator ----------------------------------------------------
+// --- NaturalWonderGenerator -------------------------------------------------
 
 void __FindValidLocs() {}
 void __PlaceWonders() {}
