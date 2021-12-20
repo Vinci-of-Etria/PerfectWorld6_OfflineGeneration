@@ -420,6 +420,27 @@ bool IsAdjacentToLand(ElevationMap* map, uint32 len, uint8* plotTypes, Coord c)
 }
 
 
+// --- Loading Settings -------------------------------------------------------
+
+void LoadDefaultSettings(char const* settingsFile)
+{
+    FILE* fd;
+
+    // Load defaults first
+    gSet = PW6Settings();
+
+    if (settingsFile &&
+        (fd = fopen(settingsFile, "r")))
+    {
+
+
+        fclose(fd);
+    }
+    else
+        printf("No settings file, just loading defaults.");
+}
+
+
 // --- Util Functions ---------------------------------------------------------
 
 static Dir FlipDir(Dir dir)

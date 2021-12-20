@@ -1,0 +1,163 @@
+/// General
+
+// Top and bottom map latitudes.
+topLatitude=70
+bottomLatitude=-70
+
+// Default frequencies for map of width 128. Adjusting these frequences
+// will generate larger or smaller map features.
+twistMinFreq=0.05
+twistMaxFreq=0.12
+twistVar=0.042
+mountainFreq=0.078
+
+
+
+/// Land/Water Division
+
+// Percent of land tiles on the map.
+landPercent=0.28
+
+bool AllowPangeas=false
+// A continent with more land tiles than this percentage of total landtiles is
+// considered a pangaea and broken up if allowed.
+PangaeaSize=0.70
+// Maximum percentage of land tiles that will be designated as new world continents.
+maxNewWorldSize=0.35
+
+// These attenuation factors lower the altitude of the map edges. This is currently
+// used to prevent large continents in the uninhabitable polar regions.
+northAttenuationFactor=0.75
+southAttenuationFactor=0.75
+// Percent of the map height
+northAttenuationRange=0.15
+southAttenuationRange=0.15
+
+// East west attenuation. Civ 6 creates a rather ugly seam when continents
+// straddle the map edge. It still plays well but I have decided to avoid
+// the map edges for aesthetic reasons.
+eastAttenuationFactor=0.75
+westAttenuationFactor=0.75
+// Percent of the map height
+eastAttenuationRange=0.10
+westAttenuationRange=0.10
+
+
+
+/// Terrain
+
+// Percent of dry land that is below the hill elevation deviance threshold.
+hillsPercent=0.54
+// Percent of dry land that is below the mountain elevation deviance threshold.
+mountainsPercent=0.86
+
+// Percent of land that is below the desert rainfall threshold.
+desertPercent=0.37
+// Percent of land that is below the plains rainfall threshold.
+plainsPercent=0.64
+
+// Coldest absolute temperature allowed to be desert, plains if colder.
+desertMinTemperature=0.34
+// Absolute temperature below which is tundra.
+tundraTemperature=0.32
+// Absolute temperature below which is snow.
+snowTemperature=0.27
+
+// Percent of land tiles made to be lakes
+lakePercent=0.04
+
+// Fill in any lakes smaller than this. It looks bad to have large
+// river systems flowing into a tiny lake.
+minOceanSize=50
+
+// Weight of the mountain elevation map versus the coastline elevation map.
+mountainWeight=0.8
+
+
+
+/// Rain
+
+// Strength of geostrophic climate generation versus monsoon climate generation.
+geostrophicFactor=3.0
+
+geostrophicLateralWindStrength=0.6
+
+// Important latitude markers used for generating climate.
+polarFrontLatitude=60
+tropicLatitudes=23
+// I shrunk these a bit to emphasize temperate lattitudes
+horseLatitudes=28
+
+// Crazy rain tweaking variables. I wouldn't touch these if I were you.
+minimumRainCost=0.0001
+upLiftExponent=4
+polarRainBoost=0.00
+
+
+
+/// Rivers
+
+// Percent of river junctions that are large enough to become rivers.
+riverPercent=0.55
+// Minumum river length measured in hex sides. Shorter rivers that are not lake outflows will be culled.
+minRiverLength=5
+
+
+
+/// Features
+
+// Percent of land that is below the rainfall threshold where no trees can appear.
+zeroTreesPercent=0.30
+// Percent of land below the jungle rainfall threshold.
+junglePercent=0.78
+// Percent of land below the marsh rainfall threshold.
+marshPercent=0.92
+
+// Coldest absolute temperature where trees appear.
+treesMinTemperature=0.27
+// Coldest absolute temperature allowed to be jungle, forest if colder.
+jungleMinTemperature=0.70
+
+// North and south ice latitude limits. Used for pre-GS
+iceNorthLatitudeLimit=60
+iceSouthLatitudeLimit=-60
+
+// This is the percent of rivers that have floodplains that flood
+// largest rivers always have priority for floodability
+percentRiversFloodplains=0.25
+
+// Maximum chance for reef at highest temperature
+maxReefChance=0.15
+
+// normally, jungle has plains underlying them. I personally don't like it because I want
+// jungles to look wet, and I like that it makes settling in jungle more challenging,
+// however, it's a subjective thing. Here is an option to change it back.
+//   None
+//   HillsOnly
+//   All
+JungleToPlains=All
+
+// PerfectWorld maps are a bit bigger that normal maps, and it may be appropriate to
+// have slightly more natural wonders. This variable sets how many extra wonders are set
+// according to map size. I'm told that 'less is more' when it comes to natural wonders,
+// and I interpret that as a little more is maybe more than less.
+naturalWonderExtra=1
+
+// These set the water temperature compression that creates the land/sea
+// seasonal temperature differences that cause monsoon winds.
+// (makes coasts more or less likely to have jungle and marsh (lower == less likely))
+minWaterTemp=0.10
+maxWaterTemp=0.60
+
+
+
+/// Assign Starting Plots
+
+bool OldWorldStart=true
+// If OldWorldStart == true, setting this to false will force all minor civs to start
+// in the old world also. Setting this to true will spread minor civs proportional to
+// the land mass of the old and new worlds. If OldWorldStart == false, then this does nothing
+bool ProportionalMinors=true
+// This is the minimum contiguous passable non water landmass that can be considered
+// a major civ capital. Full 3 radius city area could have 37 tiles maximum
+realEstateMin=15
