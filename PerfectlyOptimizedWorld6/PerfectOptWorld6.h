@@ -103,7 +103,7 @@ struct PW6Settings
 
     // Fill in any lakes smaller than this. It looks bad to have large
     // river systems flowing into a tiny lake.
-    int32 minOceanSize = 50;
+    uint32 minOceanSize = 50;
 
     // Weight of the mountain elevation map versus the coastline elevation map.
     float32 mountainWeight = 0.8f;

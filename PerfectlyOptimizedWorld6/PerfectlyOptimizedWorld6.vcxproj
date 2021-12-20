@@ -174,6 +174,17 @@
     <None Include="Assets\Maps\Small_Continents.lua" />
     <None Include="Assets\Maps\Terra.lua" />
     <None Include="Assets\Maps\Utility\AssignStartingPlots.lua" />
+    <None Include="Assets\Maps\Utility\EXP1\FeatureGenerator.Lua" />
+    <None Include="Assets\Maps\Utility\EXP1\MapEnums.Lua" />
+    <None Include="Assets\Maps\Utility\EXP1\NaturalWonderGenerator.lua" />
+    <None Include="Assets\Maps\Utility\EXP2\AssignStartingPlots.lua" />
+    <None Include="Assets\Maps\Utility\EXP2\CoastalLowlands.lua" />
+    <None Include="Assets\Maps\Utility\EXP2\FeatureGenerator.lua" />
+    <None Include="Assets\Maps\Utility\EXP2\MapEnums.Lua" />
+    <None Include="Assets\Maps\Utility\EXP2\NaturalWonderGenerator.lua" />
+    <None Include="Assets\Maps\Utility\EXP2\ResourceGenerator.lua" />
+    <None Include="Assets\Maps\Utility\EXP2\RiversLakes.lua" />
+    <None Include="Assets\Maps\Utility\EXP2\TerrainGenerator.lua" />
     <None Include="Assets\Maps\Utility\FeatureGenerator.lua" />
     <None Include="Assets\Maps\Utility\MapEnums.lua" />
     <None Include="Assets\Maps\Utility\MapUtilities.lua" />

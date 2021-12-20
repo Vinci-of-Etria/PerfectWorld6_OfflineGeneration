@@ -366,6 +366,36 @@ void AddParent(RiverJunction* junc, RiverJunction* parent);
 void InitRiverJunction(RiverJunction* junc, Coord c, bool isNorth);
 float64 GetAttenuationFactor(Dim dim, Coord c);
 
+void GetNeighbor(FloatMap*, Coord coord, Dir dir, Coord* out);
+uint32 GetIndex(FloatMap* map, Coord coord);
+bool IsBelowSeaLevel(ElevationMap* map, uint32 i);
+void FillArea(PWAreaMap* map, Coord c, PWArea* area, MatchI mFunc);
+void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc);
+std::vector<uint32> GetRadiusAroundCell(Dim dim, Coord c, uint32 rad);
+uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, FloatMap* outTemp, uint8** outPlot);
+uint32 GenerateTerrain(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap, uint8** out);
+void FinalAlterations(ElevationMap* map, uint8* plotTypes, uint8* terrainTypes);
+void GenerateCoasts(ElevationMap* map, uint8* plotTypes, uint8* terrainTypes);
+void InitPangaeaBreaker(PangaeaBreaker* pb, ElevationMap* map, uint8* terrainTypes);
+bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes);
+void ExitPangaeaBreaker(PangaeaBreaker* pb);
+void CreateNewWorldMap(PangaeaBreaker* pb);
+void ApplyTerrain(uint32 len, uint8* plotTypes, uint8* terrainTypes);
+void AddLakes(RiverMap* map);
+void AddRivers(RiverMap* map);
+void AddFeatures(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap);
+void ClearFloodPlains(RiverMap* map);
+void DistributeRain(Coord c, ElevationMap* map, FloatMap* temperatureMap,
+    FloatMap* pressureMap, FloatMap* rainfallMap, FloatMap* moistureMap, bool isGeostrophic);
+float64 GetRainCost(float64 upLiftSource, float64 upLiftDest);
+void GetRiverSidesForJunction(RiverMap* map, RiverJunction* junc, MapTile** out0, MapTile** out1);
+bool IsPangea(PangaeaBreaker* pb);
+Coord GetMeteorStrike(PangaeaBreaker* pb);
+void CastMeteorUponTheEarth(PangaeaBreaker* pb, Coord c, uint8* plotTypes, uint8* terrainTypes);
+Coord GetHighestCentrality(PangaeaBreaker* pb, uint32 id);
+std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id);
+void InitCentralityScore(CentralityScore* score, ElevationMap* map, Coord c);
+
 
 // --- Base Game Source Functions ---------------------------------------------
 
@@ -402,7 +432,7 @@ static float64 BellCurve(float64 value)
     return sin(value * M_PI * 2.0 - M_PI_2) * 0.5 + 0.5;
 }
 
-static float64 PWRandSeed(uint32 fixed_seed = 0)
+static void PWRandSeed(uint32 fixed_seed = 0)
 {
     uint32 seed = fixed_seed;
     //seed = 394527185;
@@ -1213,11 +1243,6 @@ void InitElevationMap(ElevationMap* map, Dim dim, bool xWrap, bool yWrap)
 bool IsBelowSeaLevel(ElevationMap* map, Coord c)
 {
     uint32 i = GetIndex(&map->base, c);
-    return map->base.data[i] < map->seaLevelThreshold;
-}
-
-bool IsBelowSeaLevel(ElevationMap* map, uint32 i)
-{
     return map->base.data[i] < map->seaLevelThreshold;
 }
 
@@ -2646,7 +2671,7 @@ void GenerateMap(Dim dim)
         //TerrainBuilder.GenerateFloodplains(true, iMinFloodplainSize, iMaxFloodplainSize);
     }
 
-    AddCliffs(plotTypes, terrainTypes);
+    //AddCliffs(plotTypes, terrainTypes);
 
     //if Gathering Storm
     {
@@ -2936,13 +2961,13 @@ void FillInLakes(ElevationMap* map)
         if (it->trueMatch && it->size < gSet.minOceanSize)
             for (uint32 i = 0; i < areaMap.base.length; ++i)
                 if (areaMap.base.data[i] == it->ind)
-                    map->base.data[i] == map->seaLevelThreshold;
+                    map->base.data[i] = map->seaLevelThreshold;
 }
 
 void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinter, FloatMap* outTemp)
 {
     Dim dim = map->base.dim;
-    float64 reducedWidth = (uint32)floor(dim.w / 8.0);
+    uint32 reducedWidth = (uint32)floor(dim.w / 8.0);
     Coord c;
 
     FloatMap aboveSeaLevelMap;
@@ -3054,7 +3079,7 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
         for (c.x = 0; c.x < dim.w; ++c.x, ++sIns, ++sIt)
             *sIns = { c, *sIt };
 
-    std::sort(sortedSummerMap, sIns, [](RefMap* a, RefMap* b) { a->val < b->val; });
+    std::sort(sortedSummerMap, sIns, [](RefMap& a, RefMap& b) { return a.val < b.val; });
 
     // Create sorted winter map
     RefMap* sortedWinterMap = (RefMap*)malloc(map->base.length * sizeof(RefMap));
@@ -3065,7 +3090,7 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
         for (c.x = 0; c.x < dim.w; ++c.x, ++wIns, ++wIt)
             *wIns = { c, *wIt };
 
-    std::sort(sortedWinterMap, wIns, [](RefMap* a, RefMap* b) { a->val < b->val; });
+    std::sort(sortedSummerMap, sIns, [](RefMap& a, RefMap& b) { return a.val < b.val; });
 
     RefMap* sortedGeoMap = (RefMap*)malloc(map->base.length * sizeof(RefMap));
     uint32 geoIndex = 0;
@@ -3083,7 +3108,7 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
                 bottomY = 0;
             std::pair<Dir, Dir> dir = GetGeostrophicWindDirections((WindZone)w);
 
-            uint32 xStart = 0, xStart = 0, xStop = 0, yStart = 0, yStop = 0;
+            uint32 xStart = 0, xStop = 0, yStart = 0, yStop = 0;
             int32 incX = 0, incY = 0;
 
             if (dir.first == dSW || dir.first == dSE)
@@ -3192,9 +3217,9 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
     InitFloatMap(rainfallMap, dim, map->base.wrapX, map->base.wrapY);
     float64* rIns = rainfallMap->data;
     float64* rEnd = rIns + map->base.length;
-    float64* rsIt = rainfallSummerMap.data;
-    float64* rwIt = rainfallWinterMap.data;
-    float64* rgIt = rainfallGeostrophicMap.data;
+    rsIt = rainfallSummerMap.data;
+    rwIt = rainfallWinterMap.data;
+    rgIt = rainfallGeostrophicMap.data;
     for (; rIns < rEnd; ++rIns, ++rsIt, ++rwIt, ++rgIt)
         *rIns = *rsIt + *rwIt + (*rgIt * gSet.geostrophicFactor);
 
@@ -3501,7 +3526,6 @@ uint32 GenerateTerrain(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap, 
     float64* eIt = map->base.data;
     float64* eEnd = eIt + map->base.length;
     float64* rIt = rainMap->data;
-    Coord c;
 
     // first find minimum rain above sea level for a soft desert transition
     for (; eIt < eEnd; ++eIt, ++rIt)
@@ -3714,7 +3738,7 @@ void AddFeatures(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap)
                 }
 
                 if (true)//TODO: CanHaveFeature(plot, tF
-                    plot->terrain == fFLOODPLAINS;
+                    plot->feature = fFLOODPLAINS;
             }
         }
 
@@ -4299,7 +4323,7 @@ std::vector<uint32> GetLargeOldWorldPlots(PangaeaBreaker* pb)
     for (; it < end; ++it, ++plot, ++id, ++i)
         if (!*it && !IsWater(plot))
         {
-            PWArea* area = GetAreaByID(&pb->areaMap, (uint32)id);
+            PWArea* area = GetAreaByID(&pb->areaMap, (uint32)*id);
 
             if (area->size > 30)
                 plots.push_back(i);
@@ -4423,7 +4447,7 @@ std::vector<uint32> FilterBadStarts(AssignStartingPlots* asp, PangaeaBreaker* pb
 
     for (uint32 start : badStarts)
     {
-        uint32 fertility;//TODO: = __BaseFertility(start);
+        uint32 fertility = 0;//TODO: = __BaseFertility(start);
 
         PWArea* area = GetAreaByID(&pb->areaMap, (uint32)pb->areaMap.base.data[start]);
 

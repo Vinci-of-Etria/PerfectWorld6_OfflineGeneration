@@ -40,6 +40,12 @@
     <Filter Include="ModData\Assets\Configuration\Schema">
       <UniqueIdentifier>{dab6d529-9f62-4b6c-a309-66954959b301}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ModData\Assets\Maps\Utility\exp1">
+      <UniqueIdentifier>{d7c9eb8e-b1bc-4e6e-a371-7dcfc2a85d27}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ModData\Assets\Maps\Utility\exp2">
+      <UniqueIdentifier>{afcaca4c-9ac0-4a69-bafc-3e83a547603b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="PerfectWorld6.modinfo">
@@ -197,6 +203,39 @@
     </None>
     <None Include="Assets\Configuration\Data\Schema\HallofFame.sql">
       <Filter>ModData\Assets\Configuration\Schema</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP1\FeatureGenerator.Lua">
+      <Filter>ModData\Assets\Maps\Utility\exp1</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP1\MapEnums.Lua">
+      <Filter>ModData\Assets\Maps\Utility\exp1</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP1\NaturalWonderGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility\exp1</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP2\NaturalWonderGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility\exp2</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP2\ResourceGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility\exp2</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP2\RiversLakes.lua">
+      <Filter>ModData\Assets\Maps\Utility\exp2</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP2\TerrainGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility\exp2</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP2\AssignStartingPlots.lua">
+      <Filter>ModData\Assets\Maps\Utility\exp2</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP2\CoastalLowlands.lua">
+      <Filter>ModData\Assets\Maps\Utility\exp2</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP2\FeatureGenerator.lua">
+      <Filter>ModData\Assets\Maps\Utility\exp2</Filter>
+    </None>
+    <None Include="Assets\Maps\Utility\EXP2\MapEnums.Lua">
+      <Filter>ModData\Assets\Maps\Utility\exp2</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
