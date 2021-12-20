@@ -4375,13 +4375,87 @@ std::vector<uint32> GetNewWorldPlots(PangaeaBreaker* pb)
 
 // --- AssignStartingPlots ----------------------------------------------------
 
-void FilterBadStarts(CentralityScore* score)
+struct AssignStartingPlots
+{
+    uint32 iNumMajorCivs = 0;
+    uint32 iNumMinorCivs = 0;
+    uint32 iResourceEraModifier = 1;
+    uint32 iNumRegions = 0;
+    uint32 iDefaultNumberMajor = 0;
+    uint32 iDefaultNumberMinor = 0;
+    int32 uiMinMajorCivFertility = 0;
+    int32 uiMinMinorCivFertility = 0;
+    uint32 uiStartMinY = 0;
+    uint32 uiStartMaxY = 0;
+    uint32 uiStartConfig = 2;
+    bool waterMap = false;
+    bool landMap = false;
+    bool noStartBiases = false;
+    bool startLargestLandmassOnly = false;
+
+    void* majorStartPlots;
+    void* majorCopy;
+    void* minorStartPlots;
+    void* minorCopy;
+    void* majorList;
+    void* minorList;
+    void* playerstarts;
+    void* sortedArray;
+    void* sortedFertilityArray;
+};
+
+void InitAssignStartingPlots(AssignStartingPlots* asp)
+{
+    //uiMinMajorCivFertility = args.MIN_MAJOR_CIV_FERTILITY
+    //uiMinMinorCivFertility = args.MIN_MINOR_CIV_FERTILITY
+    //uiStartMinY = args.START_MIN_Y
+    //uiStartMaxY = args.START_MAX_Y
+    //uiStartConfig = args.START_CONFIG
+    //waterMap  = args.WATER
+    //landMap  = args.LAND
+    //noStartBiases = args.IGNORESTARTBIAS
+    //startLargestLandmassOnly = args.START_LARGEST_LANDMASS_ONLY
+}
+
+std::vector<uint32> FilterBadStarts(AssignStartingPlots* asp, PangaeaBreaker* pb, std::vector<uint32>& badStarts, bool bMajor)
 {
     std::vector<uint32> betterStarts;
 
+    for (uint32 start : badStarts)
+    {
+        uint32 fertility;//TODO: = __BaseFertility(start);
+
+        PWArea* area = GetAreaByID(&pb->areaMap, (uint32)pb->areaMap.base.data[start]);
+
+        if (bMajor && fertility >= 10)
+        {
+            if (area->size > 30)
+                betterStarts.push_back(start);
+        }
+        else if (!bMajor && fertility >= 5)
+        {
+            if (area->size > 5)
+                betterStarts.push_back(start);
+        }
+    }
+
+    if (!betterStarts.empty())
+        printf("No better starts");
+
+    return betterStarts;
 }
 
-void __InitStartingData() {}
+void __InitStartingData(AssignStartingPlots* asp)
+{
+    if (asp->uiMinMajorCivFertility <= 0)
+        asp->uiMinMajorCivFertility = 5;
+    if (asp->uiMinMinorCivFertility <= 0)
+        asp->uiMinMinorCivFertility = 5;
+
+    // Find Default Number
+
+}
+
 void __SetStartMajor() {}
 void AddCliffs(uint8* plotTypes, uint8* terrainTypes) {}
 void SetCliff() {}
