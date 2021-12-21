@@ -1622,6 +1622,7 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc)
 
             // put same direction on stack
             map->segStack.emplace_back(LineSeg());
+            //assert(c.y != 0 || seg.dy > 0);
             InitLineSeg(&map->segStack.back(), c.y, leftExtreme, rightExtreme - 1, seg.dy);
 
             // determine if we must put reverse direction on stack
@@ -1629,6 +1630,7 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc)
             {
                 // out of shadow so put reverse direction on stack
                 map->segStack.emplace_back(LineSeg());
+                //assert(c.y != 0 || seg.dy < 0);
                 InitLineSeg(&map->segStack.back(), c.y, leftExtreme, rightExtreme - 1, -seg.dy);
             }
 
@@ -1645,6 +1647,7 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc)
         {
             // put same direction on stack
             map->segStack.emplace_back(LineSeg());
+            //assert(dy != 0 || seg.dy > 0);
             InitLineSeg(&map->segStack.back(), dy, leftExtreme, rightExtreme - 1, seg.dy);
 
             // determine if we must put reverse direction on stack
@@ -1652,6 +1655,7 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc)
             {
                 // out of shadow so put reverse direction on stack
                 map->segStack.emplace_back(LineSeg());
+                //assert(dy != 0 || seg.dy < 0);
                 InitLineSeg(&map->segStack.back(), dy, leftExtreme, rightExtreme - 1, -seg.dy);
             }
         }
