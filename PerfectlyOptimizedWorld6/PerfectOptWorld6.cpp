@@ -769,7 +769,7 @@ float64 GetInterpolatedValue(float64 x, float64 y, FloatMap* srcMap)
         {
             c.x = pX + wrappedX;
             uint32 srcIndex = GetRectIndex(srcMap, c);
-            points[(pY * 4 + pX) + 1] = srcMap->data[srcIndex];
+            points[(pY * 4 + pX)] = srcMap->data[srcIndex];
         }
     }
 
@@ -798,7 +798,7 @@ float64 GetDerivativeValue(float64 x, float64 y, FloatMap* srcMap)
         {
             c.x = pX + wrappedX;
             uint32 srcIndex = GetRectIndex(srcMap, c);
-            points[(pY * 4 + pX) + 1] = srcMap->data[srcIndex];
+            points[(pY * 4 + pX)] = srcMap->data[srcIndex];
         }
     }
 
@@ -1100,7 +1100,8 @@ float64 FindThresholdFromPercent(FloatMap* map, float64 percent, bool excludeZer
 {
     // TODO: very small scope testing function, so this should be acceptable
     // ideally we wouldn't allocate at all though
-    float64* maplist = (float64 *)malloc(map->length * sizeof(float64));
+    std::vector<float64> maplist;
+    maplist.resize(map->length);
 
     // The far majority of cases shouldn't fulfill this
     // if it is truly necessary it can be re-added, but we are in full control here
@@ -1115,7 +1116,7 @@ float64 FindThresholdFromPercent(FloatMap* map, float64 percent, bool excludeZer
     {
         float64* it = map->data;
         float64* end = it + map->length;
-        float64* ins = maplist;
+        float64* ins = maplist.data();
         for (; it < end; ++it)
             if (*it > 0.0)
             {
@@ -1126,14 +1127,13 @@ float64 FindThresholdFromPercent(FloatMap* map, float64 percent, bool excludeZer
     }
     else
     {
-        memcpy(maplist, map->data, map->length * sizeof(float64));
+        memcpy(maplist.data(), map->data, map->length * sizeof(float64));
         size = map->length;
     }
 
-    std::sort(maplist, maplist + size);
+    std::sort(maplist.begin(), maplist.end());
     // storing the value locally to prevent potential issues with alloca
     float64 retval = maplist[(uint32)(size * percent)];
-    free(maplist);
     return retval;
 }
 
@@ -1279,6 +1279,10 @@ uint32 GetRadiusAroundHex(FloatMap* map, Coord c, uint32 rad, Coord ** out)
 {
     uint32 binCoef = (rad * (rad + 1)) / 2;
     uint32 maxTiles = 1 + 6 * binCoef;
+    static uint32 cnt = 0;
+    ++cnt;
+    if (cnt == 763)
+        bool bh = true;
     Coord* coords = (Coord*)calloc(maxTiles, sizeof(Coord));
     *coords = c;
     uint32 count = 1;
@@ -2047,9 +2051,9 @@ void SiltifyLakes(RiverMap* map)
         }
     }
 
-    free(lakeList);
-    free(onQueueMapNorth);
     free(onQueueMapSouth);
+    free(onQueueMapNorth);
+    free(lakeList);
 }
 
 void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
@@ -2132,6 +2136,8 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
             ++ldu.currentLakeID;
         }
     }
+
+    free(riverHexList);
 }
 
 void GrowLake(RiverMap* map, RiverHex * lakeHex, uint32 lakeSize, LakeDataUtil* ldu,
@@ -2817,8 +2823,8 @@ void GenerateMap()
     Dim dim = { gSet.width, gSet.height };
     uint32 len = dim.w * dim.h;
 
-    uint8* plotTypes;
-    uint8* terrainTypes;
+    uint8* plotTypes = (uint8*)calloc(len, sizeof *plotTypes);
+    uint8* terrainTypes = (uint8*)calloc(len, sizeof *terrainTypes);
     ElevationMap map;
     FloatMap rainMap;
     FloatMap tempMap;
@@ -3672,6 +3678,7 @@ void ApplyVolcanoBump(ElevationMap* map, uint32 i, Coord c)
         uint32 ii = GetIndex(&map->base, *it);
         map->base.data[ii] *= 1.25;
     }
+    free(list);
 }
 
 void ApplyTerrain(uint32 len, uint8* plotTypes, uint8* terrainTypes)
@@ -3698,7 +3705,7 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
     PWRandSeed();
 
     ElevationMap* eMap = outElev;
-    GenerateElevationMap(dim, true, false, eMap);
+    GenerateElevationMap(dim, gSet.wrapX, gSet.wrapY, eMap);
     FillInLakes(eMap);
 
     FloatMap* rainfallMap = outRain;
@@ -3778,7 +3785,7 @@ uint32 GenerateTerrain(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap, 
     float64* tIt = tempMap->data;
 
     uint32_t len = dim.w * dim.h;
-    uint8* terrainTypes = (uint8*)calloc(len, sizeof *terrainTypes);
+    uint8* terrainTypes = *out;
     uint8* ins = terrainTypes;
     float64 transition = gThrs.plains - gThrs.desert;
 
@@ -3805,7 +3812,6 @@ uint32 GenerateTerrain(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap, 
             else
                 *ins = tGRASS;
 
-    *out = terrainTypes;
     return len;
 }
 
