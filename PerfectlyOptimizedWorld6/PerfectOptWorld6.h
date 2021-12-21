@@ -19,79 +19,79 @@ struct PW6Settings
 
     // Default frequencies for map of width 128. Adjusting these frequences
     // will generate larger or smaller map features.
-    float32 twistMinFreq = 0.05f;
-    float32 twistMaxFreq = 0.12f;
-    float32 twistVar = 0.042f;
-    float32 mountainFreq = 0.078f;
+    float64 twistMinFreq = 0.05;
+    float64 twistMaxFreq = 0.12;
+    float64 twistVar = 0.042;
+    float64 mountainFreq = 0.078;
 
 
 
     /// Land/Water Division
 
     // Percent of land tiles on the map.
-    float32 landPercent = 0.28f;
+    float64 landPercent = 0.28;
 
-    bool AllowPangeas = false;
+    bool allowPangeas = false;
     // A continent with more land tiles than this percentage of total landtiles is
     // considered a pangaea and broken up if allowed.
-    float32 PangaeaSize = 0.70f;
+    float64 pangaeaSize = 0.70;
     // Maximum percentage of land tiles that will be designated as new world continents.
-    float32 maxNewWorldSize = 0.35f;
+    float64 maxNewWorldSize = 0.35;
 
     // These attenuation factors lower the altitude of the map edges. This is currently
     // used to prevent large continents in the uninhabitable polar regions.
-    float32 northAttenuationFactor = 0.75f;
-    float32 northAttenuationRange = 0.15f;  // Percent of the map height
-    float32 southAttenuationFactor = 0.75f;
-    float32 southAttenuationRange = 0.15f;
+    float64 northAttenuationFactor = 0.75;
+    float64 northAttenuationRange = 0.15;  // Percent of the map height
+    float64 southAttenuationFactor = 0.75;
+    float64 southAttenuationRange = 0.15;
 
     // East west attenuation. Civ 6 creates a rather ugly seam when continents
     // straddle the map edge. It still plays well but I have decided to avoid
     // the map edges for aesthetic reasons.
-    float32 eastAttenuationFactor = 0.75f;
-    float32 eastAttenuationRange = 0.10f;  // Percent of the map height
-    float32 westAttenuationFactor = 0.75f;
-    float32 westAttenuationRange = 0.10f;
+    float64 eastAttenuationFactor = 0.75;
+    float64 eastAttenuationRange = 0.10;  // Percent of the map height
+    float64 westAttenuationFactor = 0.75;
+    float64 westAttenuationRange = 0.10;
 
 
 
     /// Terrain
 
     // Percent of dry land that is below the hill elevation deviance threshold.
-    float32 hillsPercent = 0.54f;
+    float64 hillsPercent = 0.54;
     // Percent of dry land that is below the mountain elevation deviance threshold.
-    float32 mountainsPercent = 0.86f;
+    float64 mountainsPercent = 0.86;
 
     // Percent of land that is below the desert rainfall threshold.
-    float32 desertPercent = 0.37f;
+    float64 desertPercent = 0.37;
     // Percent of land that is below the plains rainfall threshold.
-    float32 plainsPercent = 0.64f;
+    float64 plainsPercent = 0.64;
 
     // Coldest absolute temperature allowed to be desert, plains if colder.
-    float32 desertMinTemperature = 0.34f;
+    float64 desertMinTemperature = 0.34;
     // Absolute temperature below which is tundra.
-    float32 tundraTemperature = 0.32f;
+    float64 tundraTemperature = 0.32;
     // Absolute temperature below which is snow.
-    float32 snowTemperature = 0.27f;
+    float64 snowTemperature = 0.27;
 
     // Percent of land tiles made to be lakes
-    float32 lakePercent = 0.04f;
+    float64 lakePercent = 0.04;
 
     // Fill in any lakes smaller than this. It looks bad to have large
     // river systems flowing into a tiny lake.
     uint32 minOceanSize = 50;
 
     // Weight of the mountain elevation map versus the coastline elevation map.
-    float32 mountainWeight = 0.8f;
+    float64 mountainWeight = 0.8;
 
 
 
     /// Rain
 
     // Strength of geostrophic climate generation versus monsoon climate generation.
-    float32 geostrophicFactor = 3.0f;
+    float64 geostrophicFactor = 3.0;
 
-    float32 geostrophicLateralWindStrength = 0.6f;
+    float64 geostrophicLateralWindStrength = 0.6;
 
     // Important latitude markers used for generating climate.
     int32 polarFrontLatitude = 60;
@@ -99,16 +99,16 @@ struct PW6Settings
     int32 horseLatitudes = 28; // I shrunk these a bit to emphasize temperate lattitudes
 
     // Crazy rain tweaking variables. I wouldn't touch these if I were you.
-    float32 minimumRainCost = 0.0001f;
+    float64 minimumRainCost = 0.0001;
     int32 upLiftExponent = 4;
-    float32 polarRainBoost = 0.00f;
+    float64 polarRainBoost = 0.00;
 
 
 
     /// Rivers
 
     // Percent of river junctions that are large enough to become rivers.
-    float32 riverPercent = 0.55f;
+    float64 riverPercent = 0.55;
     // Minumum river length measured in hex sides. Shorter rivers that are not lake outflows will be culled.
     uint32 minRiverLength = 5;
 
@@ -117,31 +117,31 @@ struct PW6Settings
     /// Features
 
     // Percent of land that is below the rainfall threshold where no trees can appear.
-    float32 zeroTreesPercent = 0.30f;
+    float64 zeroTreesPercent = 0.30;
     // Percent of land below the jungle rainfall threshold.
-    float32 junglePercent = 0.78f;
+    float64 junglePercent = 0.78;
     // Percent of land below the marsh rainfall threshold.
-    float32 marshPercent = 0.92f;
+    float64 marshPercent = 0.92;
 
     // Coldest absolute temperature where trees appear.
-    float32 treesMinTemperature = 0.27f;
+    float64 treesMinTemperature = 0.27;
     // Coldest absolute temperature allowed to be jungle, forest if colder.
-    float32 jungleMinTemperature = 0.70f;
+    float64 jungleMinTemperature = 0.70;
 
     // North and south ice latitude limits. Used for pre-GS
     int32 iceNorthLatitudeLimit = 60;
     int32 iceSouthLatitudeLimit = -60;
 
     // This is the percent of rivers that have floodplains that flood largest rivers always have priority for floodability
-    float32 percentRiversFloodplains = 0.25f;
+    float64 percentRiversFloodplains = 0.25;
 
     // Maximum chance for reef at highest temperature
-    float32 maxReefChance = 0.15f;
+    float64 maxReefChance = 0.15;
 
     // normally, jungle has plains underlying them. I personally don't like it because I want 
     // jungles to look wet, and I like that it makes settling in jungle more challenging, 
     // however, it's a subjective thing. Here is an option to change it back.
-    JungleCoversion JungleToPlains = jcAll;
+    JungleCoversion jungleToPlains = jcAll;
 
     // PerfectWorld maps are a bit bigger that normal maps, and it may be appropriate to
     // have slightly more natural wonders. This variable sets how many extra wonders are set
@@ -151,21 +151,28 @@ struct PW6Settings
 
     // These set the water temperature compression that creates the land/sea
     // seasonal temperature differences that cause monsoon winds.
-    float32 minWaterTemp = 0.10f;
-    float32 maxWaterTemp = 0.60f;
+    float64 minWaterTemp = 0.10;
+    float64 maxWaterTemp = 0.60;
 
 
 
     /// Assign Starting Plots
 
-    bool OldWorldStart = true; //MapConfiguration.GetValue("oldworld") == "OLD_WORLD"
+    bool oldWorldStart = true; //MapConfiguration.GetValue("oldworld") == "OLD_WORLD"
     // If OldWorldStart == true, setting this to false will force all minor civs to start
     // in the old world also. Setting this to true will spread minor civs proportional to 
     // the land mass of the old and new worlds. If OldWorldStart == false, then this does nothing
-    bool ProportionalMinors = true;
+    bool proportionalMinors = true;
     // This is the minimum contiguous passable non water landmass that can be considered
     // a major civ capital. Full 3 radius city area could have 37 tiles maximum
     int32 realEstateMin = 15;
 };
 
+struct Dim
+{
+    uint16 w;
+    uint16 h;
+};
 
+void LoadDefaultSettings(char const* settingsFile);
+void GenerateMap(Dim dim);

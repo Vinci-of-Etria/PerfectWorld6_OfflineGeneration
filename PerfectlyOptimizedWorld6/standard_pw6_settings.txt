@@ -1,3 +1,6 @@
+/// If you want to have comments in your settings file, just precede them with
+/     at least a single slash (file processes faster if its the first character)
+
 /// General
 
 // Top and bottom map latitudes.
@@ -18,10 +21,10 @@ mountainFreq=0.078
 // Percent of land tiles on the map.
 landPercent=0.28
 
-bool AllowPangeas=false
+allowPangeas=false
 // A continent with more land tiles than this percentage of total landtiles is
 // considered a pangaea and broken up if allowed.
-PangaeaSize=0.70
+pangaeaSize=0.70
 // Maximum percentage of land tiles that will be designated as new world continents.
 maxNewWorldSize=0.35
 
@@ -132,10 +135,10 @@ maxReefChance=0.15
 // normally, jungle has plains underlying them. I personally don't like it because I want
 // jungles to look wet, and I like that it makes settling in jungle more challenging,
 // however, it's a subjective thing. Here is an option to change it back.
-//   None
-//   HillsOnly
-//   All
-JungleToPlains=All
+//   0 : None
+//   1 : HillsOnly
+//   2 : All
+jungleToPlains=2
 
 // PerfectWorld maps are a bit bigger that normal maps, and it may be appropriate to
 // have slightly more natural wonders. This variable sets how many extra wonders are set
@@ -153,11 +156,11 @@ maxWaterTemp=0.60
 
 /// Assign Starting Plots
 
-bool OldWorldStart=true
+oldWorldStart=true
 // If OldWorldStart == true, setting this to false will force all minor civs to start
 // in the old world also. Setting this to true will spread minor civs proportional to
 // the land mass of the old and new worlds. If OldWorldStart == false, then this does nothing
-bool ProportionalMinors=true
+proportionalMinors=true
 // This is the minimum contiguous passable non water landmass that can be considered
 // a major civ capital. Full 3 radius city area could have 37 tiles maximum
 realEstateMin=15

@@ -1,6 +1,9 @@
 #pragma once
 #pragma warning( disable : 26812 )
 
+#define _USE_MATH_DEFINES
+#define _CRT_SECURE_NO_WARNINGS
+
 #include <stdint.h>
 
 typedef char           int8;

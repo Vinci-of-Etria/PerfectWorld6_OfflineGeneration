@@ -1,13 +1,13 @@
 #include "PerfectOptWorld6.h"
 
-#define _USE_MATH_DEFINES
-#include <cmath>
-
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
+
 #include <algorithm>
+#include <cmath>
 #include <vector>
+#include <string>
 
 #include "MapEnums.h"
 
@@ -19,12 +19,6 @@ struct Coord
 {
     uint16 x;
     uint16 y;
-};
-
-struct Dim
-{
-    uint16 w;
-    uint16 h;
 };
 
 // lua floats are 64bit
@@ -422,6 +416,90 @@ bool IsAdjacentToLand(ElevationMap* map, uint32 len, uint8* plotTypes, Coord c)
 
 // --- Loading Settings -------------------------------------------------------
 
+inline void GetFloatSetting(char const* line, char const * substr,
+    char const* dataPos, float64* setting)
+{
+    if (!strstr(line, substr))
+        return;
+
+    char* end;
+    float64 val = strtod(dataPos, &end);
+    if (end > dataPos)
+    {
+        printf("   %s has been set to %.3f\n", substr, val);
+        *setting = val;
+    }
+}
+
+inline void GetIntSetting(char const* line, char const* substr,
+    char const* dataPos, int32* setting)
+{
+    if (!strstr(line, substr))
+        return;
+
+    char* end;
+    int32 val = strtol(dataPos, &end, 10);
+    if (end > dataPos)
+    {
+        printf("   %s has been set to %d\n", substr, val);
+        *setting = val;
+    }
+}
+
+inline void GetUIntSetting(char const* line, char const* substr,
+    char const* dataPos, uint32* setting)
+{
+    if (!strstr(line, substr))
+        return;
+
+    char* end;
+    uint32 val = strtoul(dataPos, &end, 10);
+    if (end > dataPos)
+    {
+        printf("   %s has been set to %u\n", substr, val);
+        *setting = val;
+    }
+}
+
+inline void GetBoolSetting(char const* line, char const* substr,
+    char const* dataPos, bool* setting)
+{
+    if (!strstr(line, substr))
+        return;
+
+    static const uint32 len = 1024;
+    char data[len];
+    // tolower substring
+    char* it = data;
+    for (; *dataPos != '\0'; ++dataPos, ++it)
+        *it = tolower(*dataPos);
+    assert(it < data + len);
+    *it = '\0';
+
+    if (strstr(data, "false"))
+    {
+        printf("   %s has been set to false\n", substr);
+        *setting = false;
+        return;
+    }
+    else if (strstr(data, "true"))
+    {
+        printf("   %s has been set to true\n", substr);
+        *setting = true;
+        return;
+    }
+    else
+    {
+        char* end;
+        int32 val = strtol(dataPos, &end, 10);
+        if (end > dataPos)
+        {
+            printf("   %s has been set to %s\n", substr, val ? "true" : "false");
+            *setting = val ? true : false;
+        }
+    }
+}
+
 void LoadDefaultSettings(char const* settingsFile)
 {
     FILE* fd;
@@ -432,7 +510,134 @@ void LoadDefaultSettings(char const* settingsFile)
     if (settingsFile &&
         (fd = fopen(settingsFile, "r")))
     {
+        printf("Settings loaded from file:\n");
 
+        static const uint32 len = 1024;
+        char line[len];
+
+        while (fgets(line, len, fd))
+        {
+            // quick exit for comment lines
+            if (line[0] == '/')
+                continue;
+
+            char* equalsPos = strchr(line, '=');
+            if (!equalsPos)
+                continue;
+            char* dataPos = equalsPos + 1;
+
+            switch (line[0])
+            {
+            case 'a': case 'A':
+                GetBoolSetting(line, "allowPangeas", dataPos, &gSet.allowPangeas);
+                break;
+            case 'b': case 'B':
+                GetIntSetting(line, "bottomLatitude", dataPos, &gSet.bottomLatitude);
+                break;
+            case 'c': case 'C':
+                break;
+            case 'd': case 'D':
+                GetFloatSetting(line, "desertPercent", dataPos, &gSet.desertPercent);
+                GetFloatSetting(line, "desertMinTemperature", dataPos, &gSet.desertMinTemperature);
+                break;
+            case 'e': case 'E':
+                GetFloatSetting(line, "eastAttenuationFactor", dataPos, &gSet.eastAttenuationFactor);
+                GetFloatSetting(line, "eastAttenuationRange", dataPos, &gSet.eastAttenuationRange);
+                break;
+            case 'f': case 'F':
+                break;
+            case 'g': case 'G':
+                GetFloatSetting(line, "geostrophicFactor", dataPos, &gSet.geostrophicFactor);
+                GetFloatSetting(line, "geostrophicLateralWindStrength", dataPos, &gSet.geostrophicLateralWindStrength);
+                break;
+            case 'h': case 'H':
+                GetFloatSetting(line, "hillsPercent", dataPos, &gSet.hillsPercent);
+                GetIntSetting(line, "horseLatitudes", dataPos, &gSet.horseLatitudes);
+                break;
+            case 'i': case 'I':
+                GetIntSetting(line, "iceNorthLatitudeLimit", dataPos, &gSet.iceNorthLatitudeLimit);
+                GetIntSetting(line, "iceSouthLatitudeLimit", dataPos, &gSet.iceSouthLatitudeLimit);
+                break;
+            case 'j': case 'J':
+                GetFloatSetting(line, "junglePercent", dataPos, &gSet.junglePercent);
+                GetFloatSetting(line, "jungleMinTemperature", dataPos, &gSet.jungleMinTemperature);
+                GetIntSetting(line, "jungleToPlains", dataPos, (int32*)&gSet.jungleToPlains);
+                break;
+            case 'k': case 'K':
+                break;
+            case 'l': case 'L':
+                GetFloatSetting(line, "landPercent", dataPos, &gSet.landPercent);
+                GetFloatSetting(line, "lakePercent", dataPos, &gSet.lakePercent);
+                break;
+            case 'm': case 'M':
+                GetFloatSetting(line, "mountainFreq", dataPos, &gSet.mountainFreq);
+                GetFloatSetting(line, "maxNewWorldSize", dataPos, &gSet.maxNewWorldSize);
+                GetFloatSetting(line, "mountainsPercent", dataPos, &gSet.mountainsPercent);
+                GetUIntSetting(line, "minOceanSize", dataPos, &gSet.minOceanSize);
+                GetFloatSetting(line, "mountainWeight", dataPos, &gSet.mountainWeight);
+                GetFloatSetting(line, "minimumRainCost", dataPos, &gSet.minimumRainCost);
+                GetUIntSetting(line, "minRiverLength", dataPos, &gSet.minRiverLength);
+                GetFloatSetting(line, "marshPercent", dataPos, &gSet.marshPercent);
+                GetFloatSetting(line, "maxReefChance", dataPos, &gSet.maxReefChance);
+                GetFloatSetting(line, "minWaterTemp", dataPos, &gSet.minWaterTemp);
+                GetFloatSetting(line, "maxWaterTemp", dataPos, &gSet.maxWaterTemp);
+                break;
+            case 'n': case 'N':
+                GetFloatSetting(line, "northAttenuationFactor", dataPos, &gSet.northAttenuationFactor);
+                GetFloatSetting(line, "northAttenuationRange", dataPos, &gSet.northAttenuationRange);
+                GetIntSetting(line, "naturalWonderExtra", dataPos, &gSet.naturalWonderExtra);
+                break;
+            case 'o': case 'O':
+                GetBoolSetting(line, "oldWorldStart", dataPos, &gSet.oldWorldStart);
+                break;
+            case 'p': case 'P':
+                GetFloatSetting(line, "pangaeaSize", dataPos, &gSet.pangaeaSize);
+                GetFloatSetting(line, "plainsPercent", dataPos, &gSet.plainsPercent);
+                GetIntSetting(line, "polarFrontLatitude", dataPos, &gSet.polarFrontLatitude);
+                GetFloatSetting(line, "polarRainBoost", dataPos, &gSet.polarRainBoost);
+                GetFloatSetting(line, "percentRiversFloodplains", dataPos, &gSet.percentRiversFloodplains);
+                GetBoolSetting(line, "proportionalMinors", dataPos, &gSet.proportionalMinors);
+                break;
+            case 'q': case 'Q':
+                break;
+            case 'r': case 'R':
+                GetFloatSetting(line, "riverPercent", dataPos, &gSet.riverPercent);
+                GetIntSetting(line, "realEstateMin", dataPos, &gSet.realEstateMin);
+                break;
+            case 's': case 'S':
+                GetFloatSetting(line, "southAttenuationFactor", dataPos, &gSet.southAttenuationFactor);
+                GetFloatSetting(line, "southAttenuationRange", dataPos, &gSet.southAttenuationRange);
+                GetFloatSetting(line, "snowTemperature", dataPos, &gSet.snowTemperature);
+                break;
+            case 't': case 'T':
+                GetIntSetting(line, "topLatitude", dataPos, &gSet.topLatitude);
+                GetFloatSetting(line, "twistMinFreq", dataPos, &gSet.twistMinFreq);
+                GetFloatSetting(line, "twistMaxFreq", dataPos, &gSet.twistMaxFreq);
+                GetFloatSetting(line, "twistVar", dataPos, &gSet.twistVar);
+                GetFloatSetting(line, "tundraTemperature", dataPos, &gSet.tundraTemperature);
+                GetIntSetting(line, "tropicLatitudes", dataPos, &gSet.tropicLatitudes);
+                GetFloatSetting(line, "treesMinTemperature", dataPos, &gSet.treesMinTemperature);
+                break;
+            case 'u': case 'U':
+                GetIntSetting(line, "upLiftExponent", dataPos, &gSet.upLiftExponent);
+                break;
+            case 'v': case 'V':
+                break;
+            case 'w': case 'W':
+                GetFloatSetting(line, "westAttenuationFactor", dataPos, &gSet.westAttenuationFactor);
+                GetFloatSetting(line, "westAttenuationRange", dataPos, &gSet.westAttenuationRange);
+                break;
+            case 'x': case 'X':
+                break;
+            case 'y': case 'Y':
+                break;
+            case 'z': case 'Z':
+                GetFloatSetting(line, "zeroTreesPercent", dataPos, &gSet.zeroTreesPercent);
+                break;
+            default:
+                break;
+            }
+        }
 
         fclose(fd);
     }
@@ -3746,11 +3951,11 @@ void AddFeatures(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap)
                     {
                         plot->feature = fJUNGLE;
 
-                        if (gSet.JungleToPlains >= jcHillsOnly)
+                        if (gSet.jungleToPlains >= jcHillsOnly)
                         {
                             if (plot->terrain >= tHillsStart)
                                 plot->terrain = tPLAINS_HILLS;
-                            else if (gSet.JungleToPlains == jcAll)
+                            else if (gSet.jungleToPlains == jcAll)
                                 plot->terrain = tPLAINS;
                         }
                     }
@@ -4056,7 +4261,7 @@ bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
 
     uint32 meteorCount = 0;
 
-    if (!gSet.AllowPangeas)
+    if (!gSet.allowPangeas)
         while (IsPangea(pb) && meteorCount < maximumMeteorCount)
         {
             pangeaDetected = true;
@@ -4072,7 +4277,7 @@ bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
     if (meteorCount == maximumMeteorCount)
         return false;
 
-    if (gSet.AllowPangeas)
+    if (gSet.allowPangeas)
         pb->oldWorldPercent = 1.0;
 
     return true;
@@ -4100,7 +4305,7 @@ bool IsPangea(PangaeaBreaker* pb)
     uint32 biggest = continentList.front()->size;
     pb->oldWorldPercent = biggest / (float64)totalLand;
 
-    return gSet.PangaeaSize < pb->oldWorldPercent;
+    return gSet.pangaeaSize < pb->oldWorldPercent;
 }
 
 Coord GetMeteorStrike(PangaeaBreaker* pb)

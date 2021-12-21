@@ -320,6 +320,9 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PerfectOptWorld6.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="standard_pw6_settings.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
