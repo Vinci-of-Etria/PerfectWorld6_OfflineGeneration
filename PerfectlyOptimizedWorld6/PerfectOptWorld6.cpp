@@ -648,6 +648,8 @@ void LoadDefaultSettings(char const* settingsFile)
             }
         }
 
+        // Note: may want to add debugging? gonna assume an informed user for now
+
         fclose(fd);
     }
     else
@@ -2809,12 +2811,11 @@ uint32 CountLand(uint32 len, uint8* plotTypes, uint8* terrainTypes)
     return landCount;
 }
 
-// TODO:
 // the "main()" of the alg
-void GenerateMap(Dim dim)
+void GenerateMap()
 {
+    Dim dim = { gSet.width, gSet.height };
     uint32 len = dim.w * dim.h;
-    // TODO: initialize gSet
 
     uint8* plotTypes;
     uint8* terrainTypes;

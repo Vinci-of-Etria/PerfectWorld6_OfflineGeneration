@@ -209,4 +209,4 @@ struct Dim
 };
 
 void LoadDefaultSettings(char const* settingsFile);
-void GenerateMap(Dim dim);
+void GenerateMap();
