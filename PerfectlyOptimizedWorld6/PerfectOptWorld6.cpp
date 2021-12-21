@@ -1279,10 +1279,6 @@ uint32 GetRadiusAroundHex(FloatMap* map, Coord c, uint32 rad, Coord ** out)
 {
     uint32 binCoef = (rad * (rad + 1)) / 2;
     uint32 maxTiles = 1 + 6 * binCoef;
-    static uint32 cnt = 0;
-    ++cnt;
-    if (cnt == 763)
-        bool bh = true;
     Coord* coords = (Coord*)calloc(maxTiles, sizeof(Coord));
     *coords = c;
     uint32 count = 1;
@@ -1416,7 +1412,7 @@ float64 GetStdDevInHex(FloatMap* map, Coord c, uint32 rad)
 // TODO: this needs MASSIVE optimization
 void Smooth(FloatMap* map, uint32 rad)
 {
-    float64* smoothedData = (float64*)malloc(map->length);
+    float64* smoothedData = (float64*)malloc(map->length * sizeof *smoothedData);
 
     float64* it = smoothedData;
     Coord c;
@@ -1432,7 +1428,7 @@ void Smooth(FloatMap* map, uint32 rad)
 // TODO: this needs MASSIVE optimization
 void Deviate(FloatMap* map, uint32 rad)
 {
-    float64* deviatedData = (float64*)malloc(map->length);
+    float64* deviatedData = (float64*)malloc(map->length * sizeof *deviatedData);
 
     float64* it = deviatedData;
     Coord c;
