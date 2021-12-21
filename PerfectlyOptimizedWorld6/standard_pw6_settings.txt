@@ -3,6 +3,18 @@
 
 /// General
 
+width=98
+height=62
+wrapX=true
+wrapY=false
+
+// Set to 0 if you want the seed randomly generated
+fixedSeed=0
+
+
+
+/// Generation
+
 // Top and bottom map latitudes.
 topLatitude=70
 bottomLatitude=-70
@@ -155,6 +167,18 @@ maxWaterTemp=0.60
 
 
 /// Assign Starting Plots
+
+numPlayers=8
+numCityStates=12
+// 0 : Sparse
+// 1 : Standard
+// 2 : Abundant
+// 3 : Random
+resources=1
+// 0 : Balanced
+// 1 : Standard
+// 2 : Legendary
+start=1
 
 oldWorldStart=true
 // If OldWorldStart == true, setting this to false will force all minor civs to start

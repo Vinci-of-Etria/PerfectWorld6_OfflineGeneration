@@ -9,9 +9,36 @@ enum JungleCoversion
     jcAll,       // Change all jungle tiles to have underlying plains
 };
 
+enum ResourceSpread
+{
+    rsSparse,
+    rsStandard,
+    rsAbundant,
+
+    rsRandom,
+};
+
+enum StartPosition
+{
+    spBalanced,
+    spStandard,
+    spLegendary,
+};
+
 struct PW6Settings
 {
     /// General
+
+    uint16 width = 98;
+    uint16 height = 62;
+    bool wrapX = true;
+    bool wrapY = false;
+
+    uint32 fixedSeed = 0;
+
+
+
+    /// Generation
 
     // Top and bottom map latitudes.
     int32 topLatitude = 70;
@@ -154,11 +181,18 @@ struct PW6Settings
     float64 minWaterTemp = 0.10;
     float64 maxWaterTemp = 0.60;
 
+    // TODO: Natural Wonder whitelist/blacklist
+
 
 
     /// Assign Starting Plots
 
-    bool oldWorldStart = true; //MapConfiguration.GetValue("oldworld") == "OLD_WORLD"
+    uint32 numPlayers = 8;
+    uint32 numCityStates = 12;
+    ResourceSpread resources = rsStandard;
+    StartPosition start = spStandard;
+    bool oldWorldStart = true;
+
     // If OldWorldStart == true, setting this to false will force all minor civs to start
     // in the old world also. Setting this to true will spread minor civs proportional to 
     // the land mass of the old and new worlds. If OldWorldStart == false, then this does nothing

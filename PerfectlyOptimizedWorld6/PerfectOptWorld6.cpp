@@ -529,10 +529,10 @@ void LoadDefaultSettings(char const* settingsFile)
             switch (line[0])
             {
             case 'a': case 'A':
-                GetBoolSetting(line, "allowPangeas", dataPos, &gSet.allowPangeas);
+                GetBoolSetting(line,  "allowPangeas", dataPos, &gSet.allowPangeas);
                 break;
             case 'b': case 'B':
-                GetIntSetting(line, "bottomLatitude", dataPos, &gSet.bottomLatitude);
+                GetIntSetting(line,   "bottomLatitude", dataPos, &gSet.bottomLatitude);
                 break;
             case 'c': case 'C':
                 break;
@@ -545,23 +545,25 @@ void LoadDefaultSettings(char const* settingsFile)
                 GetFloatSetting(line, "eastAttenuationRange", dataPos, &gSet.eastAttenuationRange);
                 break;
             case 'f': case 'F':
+                GetUIntSetting(line,  "fixedSeed", dataPos, (uint32*)&gSet.fixedSeed);
                 break;
             case 'g': case 'G':
                 GetFloatSetting(line, "geostrophicFactor", dataPos, &gSet.geostrophicFactor);
                 GetFloatSetting(line, "geostrophicLateralWindStrength", dataPos, &gSet.geostrophicLateralWindStrength);
                 break;
             case 'h': case 'H':
+                GetUIntSetting(line,  "height", dataPos, (uint32*)&gSet.height);
                 GetFloatSetting(line, "hillsPercent", dataPos, &gSet.hillsPercent);
-                GetIntSetting(line, "horseLatitudes", dataPos, &gSet.horseLatitudes);
+                GetIntSetting(line,   "horseLatitudes", dataPos, &gSet.horseLatitudes);
                 break;
             case 'i': case 'I':
-                GetIntSetting(line, "iceNorthLatitudeLimit", dataPos, &gSet.iceNorthLatitudeLimit);
-                GetIntSetting(line, "iceSouthLatitudeLimit", dataPos, &gSet.iceSouthLatitudeLimit);
+                GetIntSetting(line,   "iceNorthLatitudeLimit", dataPos, &gSet.iceNorthLatitudeLimit);
+                GetIntSetting(line,   "iceSouthLatitudeLimit", dataPos, &gSet.iceSouthLatitudeLimit);
                 break;
             case 'j': case 'J':
                 GetFloatSetting(line, "junglePercent", dataPos, &gSet.junglePercent);
                 GetFloatSetting(line, "jungleMinTemperature", dataPos, &gSet.jungleMinTemperature);
-                GetIntSetting(line, "jungleToPlains", dataPos, (int32*)&gSet.jungleToPlains);
+                GetUIntSetting(line,  "jungleToPlains", dataPos, (uint32*)&gSet.jungleToPlains);
                 break;
             case 'k': case 'K':
                 break;
@@ -573,10 +575,10 @@ void LoadDefaultSettings(char const* settingsFile)
                 GetFloatSetting(line, "mountainFreq", dataPos, &gSet.mountainFreq);
                 GetFloatSetting(line, "maxNewWorldSize", dataPos, &gSet.maxNewWorldSize);
                 GetFloatSetting(line, "mountainsPercent", dataPos, &gSet.mountainsPercent);
-                GetUIntSetting(line, "minOceanSize", dataPos, &gSet.minOceanSize);
+                GetUIntSetting(line,  "minOceanSize", dataPos, &gSet.minOceanSize);
                 GetFloatSetting(line, "mountainWeight", dataPos, &gSet.mountainWeight);
                 GetFloatSetting(line, "minimumRainCost", dataPos, &gSet.minimumRainCost);
-                GetUIntSetting(line, "minRiverLength", dataPos, &gSet.minRiverLength);
+                GetUIntSetting(line,  "minRiverLength", dataPos, &gSet.minRiverLength);
                 GetFloatSetting(line, "marshPercent", dataPos, &gSet.marshPercent);
                 GetFloatSetting(line, "maxReefChance", dataPos, &gSet.maxReefChance);
                 GetFloatSetting(line, "minWaterTemp", dataPos, &gSet.minWaterTemp);
@@ -585,45 +587,52 @@ void LoadDefaultSettings(char const* settingsFile)
             case 'n': case 'N':
                 GetFloatSetting(line, "northAttenuationFactor", dataPos, &gSet.northAttenuationFactor);
                 GetFloatSetting(line, "northAttenuationRange", dataPos, &gSet.northAttenuationRange);
-                GetIntSetting(line, "naturalWonderExtra", dataPos, &gSet.naturalWonderExtra);
+                GetIntSetting(line,   "naturalWonderExtra", dataPos, &gSet.naturalWonderExtra);
+                GetUIntSetting(line,  "numPlayers", dataPos, &gSet.numPlayers);
+                GetUIntSetting(line,  "numCityStates", dataPos, &gSet.numCityStates);
                 break;
             case 'o': case 'O':
-                GetBoolSetting(line, "oldWorldStart", dataPos, &gSet.oldWorldStart);
+                GetBoolSetting(line,  "oldWorldStart", dataPos, &gSet.oldWorldStart);
                 break;
             case 'p': case 'P':
                 GetFloatSetting(line, "pangaeaSize", dataPos, &gSet.pangaeaSize);
                 GetFloatSetting(line, "plainsPercent", dataPos, &gSet.plainsPercent);
-                GetIntSetting(line, "polarFrontLatitude", dataPos, &gSet.polarFrontLatitude);
+                GetIntSetting(line,   "polarFrontLatitude", dataPos, &gSet.polarFrontLatitude);
                 GetFloatSetting(line, "polarRainBoost", dataPos, &gSet.polarRainBoost);
                 GetFloatSetting(line, "percentRiversFloodplains", dataPos, &gSet.percentRiversFloodplains);
-                GetBoolSetting(line, "proportionalMinors", dataPos, &gSet.proportionalMinors);
+                GetBoolSetting(line,  "proportionalMinors", dataPos, &gSet.proportionalMinors);
                 break;
             case 'q': case 'Q':
                 break;
             case 'r': case 'R':
                 GetFloatSetting(line, "riverPercent", dataPos, &gSet.riverPercent);
-                GetIntSetting(line, "realEstateMin", dataPos, &gSet.realEstateMin);
+                GetUIntSetting(line,  "resources", dataPos, (uint32*)&gSet.resources);
+                GetIntSetting(line,   "realEstateMin", dataPos, &gSet.realEstateMin);
                 break;
             case 's': case 'S':
                 GetFloatSetting(line, "southAttenuationFactor", dataPos, &gSet.southAttenuationFactor);
                 GetFloatSetting(line, "southAttenuationRange", dataPos, &gSet.southAttenuationRange);
                 GetFloatSetting(line, "snowTemperature", dataPos, &gSet.snowTemperature);
+                GetUIntSetting(line,  "start", dataPos, (uint32*)&gSet.start);
                 break;
             case 't': case 'T':
-                GetIntSetting(line, "topLatitude", dataPos, &gSet.topLatitude);
+                GetIntSetting(line,   "topLatitude", dataPos, &gSet.topLatitude);
                 GetFloatSetting(line, "twistMinFreq", dataPos, &gSet.twistMinFreq);
                 GetFloatSetting(line, "twistMaxFreq", dataPos, &gSet.twistMaxFreq);
                 GetFloatSetting(line, "twistVar", dataPos, &gSet.twistVar);
                 GetFloatSetting(line, "tundraTemperature", dataPos, &gSet.tundraTemperature);
-                GetIntSetting(line, "tropicLatitudes", dataPos, &gSet.tropicLatitudes);
+                GetIntSetting(line,   "tropicLatitudes", dataPos, &gSet.tropicLatitudes);
                 GetFloatSetting(line, "treesMinTemperature", dataPos, &gSet.treesMinTemperature);
                 break;
             case 'u': case 'U':
-                GetIntSetting(line, "upLiftExponent", dataPos, &gSet.upLiftExponent);
+                GetIntSetting(line,   "upLiftExponent", dataPos, &gSet.upLiftExponent);
                 break;
             case 'v': case 'V':
                 break;
             case 'w': case 'W':
+                GetUIntSetting(line,  "width", dataPos, (uint32*)&gSet.width);
+                GetBoolSetting(line,  "wrapX", dataPos, &gSet.wrapX);
+                GetBoolSetting(line,  "wrapY", dataPos, &gSet.wrapY);
                 GetFloatSetting(line, "westAttenuationFactor", dataPos, &gSet.westAttenuationFactor);
                 GetFloatSetting(line, "westAttenuationRange", dataPos, &gSet.westAttenuationRange);
                 break;
