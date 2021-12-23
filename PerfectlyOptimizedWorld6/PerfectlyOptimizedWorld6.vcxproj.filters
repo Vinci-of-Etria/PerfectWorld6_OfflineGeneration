@@ -562,10 +562,12 @@
     <ClInclude Include="PerfectOptWorld6.h" />
     <ClInclude Include="typedefs.h" />
     <ClInclude Include="MapEnums.h" />
+    <ClInclude Include="ImageWriter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PerfectOptWorld6.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ImageWriter.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="standard_pw6_settings.txt" />

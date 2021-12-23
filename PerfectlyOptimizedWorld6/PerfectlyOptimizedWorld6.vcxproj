@@ -313,11 +313,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MapEnums.h" />
+    <ClInclude Include="ImageWriter.h" />
     <ClInclude Include="PerfectOptWorld6.h" />
     <ClInclude Include="typedefs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="ImageWriter.cpp" />
     <ClCompile Include="PerfectOptWorld6.cpp" />
   </ItemGroup>
   <ItemGroup>

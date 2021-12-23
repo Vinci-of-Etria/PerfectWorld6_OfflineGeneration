@@ -10,6 +10,7 @@
 #include <string>
 
 #include "MapEnums.h"
+#include "ImageWriter.h"
 
 #pragma warning( disable : 6011 6387 26451 )
 
@@ -41,7 +42,7 @@ struct FloatMap
 struct ElevationMap
 {
     FloatMap base;
-    float64 seaLevelThreshold;
+    float64 seaThreshold;
 };
 
 struct PWArea
@@ -175,7 +176,10 @@ struct MapSettings
 struct Thresholds
 {
     // height based
-    float64 seaLevel;
+    float64 ocean;
+    float64 coast;
+    float64 hills;
+    float64 mountains;
 
     // rain based
     float64 desert;
@@ -1474,18 +1478,18 @@ void InitElevationMap(ElevationMap* map, Dim dim, bool xWrap, bool yWrap)
 {
     InitFloatMap(&map->base, dim, xWrap, yWrap);
 
-    map->seaLevelThreshold = 0.0;
+    map->seaThreshold = 0.0;
 }
 
 bool IsBelowSeaLevel(ElevationMap* map, Coord c)
 {
     uint32 i = GetIndex(&map->base, c);
-    return map->base.data[i] < map->seaLevelThreshold;
+    return map->base.data[i] < map->seaThreshold;
 }
 
 bool IsBelowSeaLevel(ElevationMap* map, uint32 i)
 {
-    return map->base.data[i] < map->seaLevelThreshold;
+    return map->base.data[i] < map->seaThreshold;
 }
 
 // --- AreaMap
@@ -1557,11 +1561,9 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc)
     if (vy == UINT16_MAX)
         return;
 
-    int16 odd = dy % 2;
-    if (odd < 0)
-        odd = -odd;
+    uint16 odd = vy % 2;
     uint16 notOdd = !odd;
-    int32 xStop = map->base.wrapX ? -(map->base.dim.w * 30) : -1;
+    int32 xStop = map->base.wrapX ? map->base.dim.w * -30 : -1;
 
     int32 lineFound = 0;
     int32 leftExtreme = INT32_MAX;
@@ -1575,7 +1577,7 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc)
         c.y = vy;
         uint32 i = GetIndex(&map->base, c);
 
-        if (map->base.data[i] == 0 || area->trueMatch == mFunc(i))
+        if (map->base.data[i] == 0 && area->trueMatch == mFunc(i))
         {
             map->base.data[i] = area->ind;
             ++area->size;
@@ -1606,7 +1608,7 @@ void ScanAndFillLine(PWAreaMap* map, LineSeg seg, PWArea* area, MatchI mFunc)
         c.y = vy;
         uint32 i = GetIndex(&map->base, c);
 
-        if (map->base.data[i] == 0 || area->trueMatch == mFunc(i))
+        if (map->base.data[i] == 0 && area->trueMatch == mFunc(i))
         {
             map->base.data[i] = area->ind;
             ++area->size;
@@ -1678,7 +1680,7 @@ uint16 ValidateY(PWAreaMap* map, int16 y)
         int16 wrappedY = y % map->base.dim.h;
         return wrappedY >= 0 ? wrappedY : wrappedY + map->base.dim.h;
     }
-    else if (y > map->base.dim.h)
+    else if (y >= map->base.dim.h || y < 0)
         return UINT16_MAX;
 
     return y;
@@ -1691,7 +1693,7 @@ uint16 ValidateX(PWAreaMap* map, int16 x)
         int16 wrappedX = x % map->base.dim.w;
         return wrappedX >= 0 ? wrappedX : wrappedX + map->base.dim.w;
     }
-    else if (x > map->base.dim.w)
+    else if (x >= map->base.dim.w || x < 0)
         return UINT16_MAX;
 
     return x;
@@ -1913,7 +1915,7 @@ bool isLake(RiverMap* map, RiverJunction* junc)
     if ((junc->coord.y == 0 && !junc->isNorth) ||
         (junc->coord.y == map->eMap->base.dim.h - 1 && junc->isNorth) ||
         // exclude altitudes below sea level
-        (junc->altitude < map->eMap->seaLevelThreshold))
+        (junc->altitude < map->eMap->seaThreshold))
         return false;
 
     RiverJunction* vertNbr = GetJunctionNeighbor(map, fdVert, junc);
@@ -2078,7 +2080,7 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
 
     for (; it < end; ++it, ++rivIt, ++rainIt)
     {
-        if (*it > map->eMap->seaLevelThreshold)
+        if (*it > map->eMap->seaThreshold)
         {
             rivIt->rainfall = *rainIt;
             *riverHexIns = rivIt;
@@ -2230,7 +2232,7 @@ bool ValidLakeHex(RiverMap* map, RiverHex* lakeHex, LakeDataUtil* ldu)
     {
         RiverHex* nHex = map->riverData + i;
 
-        if (map->eMap->base.data[i] < map->eMap->seaLevelThreshold)
+        if (map->eMap->base.data[i] < map->eMap->seaThreshold)
             return false;
         else if (nHex->lakeID != UINT32_MAX && nHex->lakeID != ldu->currentLakeSize)
             return false;
@@ -2822,6 +2824,52 @@ uint32 CountLand(uint32 len, uint8* plotTypes, uint8* terrainTypes)
     return landCount;
 }
 
+void PaintElevationMap(void* data, uint8 bgrOut[3])
+{
+    float64 val = *(float64*)data;
+
+    // ocean
+    if (val <= gThrs.ocean)
+    {
+        // rgb: #12142b
+        bgrOut[0] = 0x2b;
+        bgrOut[1] = 0x14;
+        bgrOut[2] = 0x12;
+    }
+    // coast
+    else if (val < gThrs.coast)
+    {
+        // rgb: #5e6f8d
+        bgrOut[0] = 0x8d;
+        bgrOut[1] = 0x6f;
+        bgrOut[2] = 0x5e;
+    }
+    // land
+    else if (val < gThrs.hills)
+    {
+        // rgb: #6f943d
+        bgrOut[0] = 0x3d;
+        bgrOut[1] = 0x94;
+        bgrOut[2] = 0x6f;
+    }
+    // hills
+    else if (val < gThrs.hills)
+    {
+        // rgb: #a68672
+        bgrOut[0] = 0x72;
+        bgrOut[1] = 0x86;
+        bgrOut[2] = 0xa6;
+    }
+    // mountain
+    else
+    {
+        // rgb: #6e5e57
+        bgrOut[0] = 0x57;
+        bgrOut[1] = 0x5e;
+        bgrOut[2] = 0x6e;
+    }
+}
+
 // the "main()" of the alg
 void GenerateMap()
 {
@@ -2854,6 +2902,10 @@ void GenerateMap()
         ExitFloatMap(&rainMap);
         ExitFloatMap(&map.base);
     }
+
+    gThrs.coast = map.seaThreshold;
+    WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
+        map.base.data, sizeof *map.base.data, PaintElevationMap);
 
     if (iter == 10)
     {
@@ -3188,7 +3240,7 @@ void GenerateElevationMap(Dim dim, bool xWrap, bool yWrap, ElevationMap * out)
         for (c.x = 0; c.x < dim.w; ++c.x, ++eIt)
             *eIt *= GetAttenuationFactor(dim, c);
 
-    elevationMap->seaLevelThreshold = FindThresholdFromPercent(&elevationMap->base, 1.0 - gSet.landPercent, false);
+    elevationMap->seaThreshold = FindThresholdFromPercent(&elevationMap->base, 1.0 - gSet.landPercent, false);
 }
 
 // TODO: no lambdas
@@ -3208,7 +3260,7 @@ void FillInLakes(ElevationMap* map)
         if (it->trueMatch && it->size < gSet.minOceanSize)
             for (uint32 i = 0; i < areaMap.base.length; ++i)
                 if (areaMap.base.data[i] == it->ind)
-                    map->base.data[i] = map->seaLevelThreshold;
+                    map->base.data[i] = map->seaThreshold;
 }
 
 void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinter, FloatMap* outTemp)
@@ -3229,7 +3281,7 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
             if (IsBelowSeaLevel(map, c))
                 *it = 0.0;
             else
-                *it = *eIt - map->seaLevelThreshold;
+                *it = *eIt - map->seaThreshold;
         }
 
     Normalize(&aboveSeaLevelMap);
@@ -3741,8 +3793,8 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
 
     Normalize(&diffMap);
 
-    float64 hillsThreshold = FindThresholdFromPercent(&diffMap, gSet.hillsPercent, true);
-    float64 mountainsThreshold = FindThresholdFromPercent(&diffMap, gSet.mountainsPercent, true);
+    gThrs.hills = FindThresholdFromPercent(&diffMap, gSet.hillsPercent, true);
+    gThrs.mountains = FindThresholdFromPercent(&diffMap, gSet.mountainsPercent, true);
 
     uint32_t len = dim.w * dim.h;
     // Note: allocating outside of function to reduce reallocs
@@ -3754,9 +3806,9 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
         for (c.x = 0; c.x < dim.w; ++c.x, ++pIns, ++dIt)
             if (IsBelowSeaLevel(eMap, c))
                 *pIns = ptOcean;
-            else if (*dIt < hillsThreshold)
+            else if (*dIt < gThrs.hills)
                 *pIns = ptLand;
-            else if (*dIt < mountainsThreshold)
+            else if (*dIt < gThrs.mountains)
                 *pIns = ptHills;
             else
                 *pIns = ptMountain;
@@ -3777,7 +3829,7 @@ uint32 GenerateTerrain(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap, 
 
     // first find minimum rain above sea level for a soft desert transition
     for (; eIt < eEnd; ++eIt, ++rIt)
-        if (*eIt >= map->seaLevelThreshold &&
+        if (*eIt >= map->seaThreshold &&
             *rIt < minRain)
             minRain = *rIt;
 
@@ -3795,7 +3847,7 @@ uint32 GenerateTerrain(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap, 
     float64 transition = gThrs.plains - gThrs.desert;
 
     for (; eIt < eEnd; ++eIt, ++rIt, ++tIt, ++ins)
-        if (*eIt >= map->seaLevelThreshold)
+        if (*eIt >= map->seaThreshold)
             if (*tIt < gSet.snowTemperature)
                 *ins = tSNOW;
             else if (*tIt < gSet.tundraTemperature)
@@ -3833,7 +3885,7 @@ void FinalAlterations(ElevationMap* map, uint8* plotTypes, uint8* terrainTypes)
     // by turning it into plains
     for (c.y = 0; c.y < dim.h; ++c.y)
         for (c.x = 0; c.x < dim.w; ++c.x, ++eIt, ++pIt, ++tIt)
-            if (*eIt >= map->seaLevelThreshold)
+            if (*eIt >= map->seaThreshold)
             {
                 if (*tIt == tSNOW)
                 {
@@ -3916,14 +3968,14 @@ void GenerateCoasts(ElevationMap* map, uint8* plotTypes, uint8* terrainTypes)
     uint8* pIt = plotTypes;
     uint8* tIt = terrainTypes;
     float64* eIt = map->base.data;
-    float64 coastThreshold = map->seaLevelThreshold * 0.90;
+    gThrs.coast = map->seaThreshold * 0.90;
 
     for (c.y = 0; c.y < dim.h; ++c.y)
         for (c.x = 0; c.x < dim.w; ++c.x, ++pIt, ++tIt, ++eIt)
             if (*pIt == ptOcean)
             {
                 if (IsAdjacentToLand(map, len, plotTypes, c) ||
-                    *eIt > coastThreshold)
+                    *eIt > gThrs.coast)
                     *tIt = tCOAST;
                 else
                     *tIt = tOCEAN;
@@ -4357,7 +4409,7 @@ void CastMeteorUponTheEarth(PangaeaBreaker* pb, Coord c, uint8* plotTypes, uint8
     uint32 i = GetIndex(&pb->map->base, c);
     terrainTypes[i] = tOCEAN;
     plotTypes[i] = ptOcean;
-    pb->map->base.data[i] = pb->map->seaLevelThreshold - 0.01;
+    pb->map->base.data[i] = pb->map->seaThreshold - 0.01;
 
     for (i = 0; i < ringList.size(); ++i)
     {
@@ -4365,10 +4417,10 @@ void CastMeteorUponTheEarth(PangaeaBreaker* pb, Coord c, uint8* plotTypes, uint8
         if (terrainTypes[ind] != tOCEAN)
         {
             terrainTypes[ind] = tCOAST;
-            pb->map->base.data[i] = pb->map->seaLevelThreshold - 0.01;
+            pb->map->base.data[i] = pb->map->seaThreshold - 0.01;
         }
         plotTypes[ind] = ptOcean;
-        pb->map->base.data[ind] = pb->map->seaLevelThreshold - 0.01;
+        pb->map->base.data[ind] = pb->map->seaThreshold - 0.01;
     }
 
     std::vector<uint32> innerList = GetRadiusAroundCell(dim, c, radius - 1);
@@ -4378,7 +4430,7 @@ void CastMeteorUponTheEarth(PangaeaBreaker* pb, Coord c, uint8* plotTypes, uint8
         uint32 ind = innerList[i];
         terrainTypes[ind] = tOCEAN;
         plotTypes[ind] = ptOcean;
-        pb->map->base.data[ind] = pb->map->seaLevelThreshold - 0.01;
+        pb->map->base.data[ind] = pb->map->seaThreshold - 0.01;
     }
 }
 
