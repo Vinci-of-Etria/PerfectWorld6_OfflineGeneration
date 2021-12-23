@@ -2831,6 +2831,7 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // ocean
     if (val <= gThrs.ocean)
     {
+        printf("Ocean");
         // rgb: #12142b
         bgrOut[0] = 0x2b;
         bgrOut[1] = 0x14;
@@ -2839,6 +2840,7 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // coast
     else if (val < gThrs.coast)
     {
+        printf("Coast");
         // rgb: #5e6f8d
         bgrOut[0] = 0x8d;
         bgrOut[1] = 0x6f;
@@ -2847,14 +2849,16 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // land
     else if (val < gThrs.hills)
     {
+        printf("Land");
         // rgb: #6f943d
         bgrOut[0] = 0x3d;
         bgrOut[1] = 0x94;
         bgrOut[2] = 0x6f;
     }
     // hills
-    else if (val < gThrs.hills)
+    else if (val < gThrs.mountains)
     {
+        printf("Hills");
         // rgb: #a68672
         bgrOut[0] = 0x72;
         bgrOut[1] = 0x86;
@@ -2863,10 +2867,52 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // mountain
     else
     {
+        printf("Mountain");
         // rgb: #6e5e57
         bgrOut[0] = 0x57;
         bgrOut[1] = 0x5e;
         bgrOut[2] = 0x6e;
+    }
+}
+
+void PaintPlotTypes(void* data, uint8 bgrOut[3])
+{
+    uint8 val = *(uint8*)data;
+
+
+    switch (val)
+    {
+    case ptOcean:
+        //printf("Ocean");
+        // rgb: #12142b
+        bgrOut[0] = 0x2b;
+        bgrOut[1] = 0x14;
+        bgrOut[2] = 0x12;
+        break;
+    case ptLand:
+        //printf("Land");
+        // rgb: #6f943d
+        bgrOut[0] = 0x3d;
+        bgrOut[1] = 0x94;
+        bgrOut[2] = 0x6f;
+        break;
+    case ptHills:
+        //printf("Hills");
+        // rgb: #a68672
+        bgrOut[0] = 0x72;
+        bgrOut[1] = 0x86;
+        bgrOut[2] = 0xa6;
+        break;
+    case ptMountain:
+        //printf("Mountain");
+        // rgb: #6e5e57
+        bgrOut[0] = 0x57;
+        bgrOut[1] = 0x5e;
+        bgrOut[2] = 0x6e;
+        break;
+    default:
+        printf("Miss");
+        break;
     }
 }
 
@@ -2904,8 +2950,10 @@ void GenerateMap()
     }
 
     gThrs.coast = map.seaThreshold;
+    //WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
+    //    map.base.data, sizeof *map.base.data, PaintElevationMap);
     WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
-        map.base.data, sizeof *map.base.data, PaintElevationMap);
+        plotTypes, sizeof *plotTypes, PaintPlotTypes);
 
     if (iter == 10)
     {

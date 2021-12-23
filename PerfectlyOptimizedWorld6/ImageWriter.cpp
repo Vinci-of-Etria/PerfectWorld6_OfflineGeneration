@@ -168,7 +168,8 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
 
 
     // create image buffer
-    uint8* image = (uint8*)calloc(byteLen, sizeof *image);
+    uint8* image = (uint8*)malloc(byteLen * sizeof *image);
+    memset(image, 0xFF, byteLen * sizeof * image);
 
     uint8* pix = image;
     it = (uint8*)data;
@@ -248,12 +249,17 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
         hexOffsetsTop
     };
     uint32 const* last = hexOffsets;
+    uint8 * bgrRef[] = {
+        mappedBGR + bgrWidth,
+        mappedBGR
+    };
     uint32 alternator = 1;
 
     for (uint32 h = 1; h < height; ++h, alternator ^= 1)
     {
         hexIt = hexRef[alternator];
         uint32 const* hexItAlt = last;
+        bgrEnd = bgrRef[alternator] + bgrWidth;
 
         for (uint32 i = 0; i < hexCapHeight; ++i, hexIt += 2, hexItAlt += 2)
         {
@@ -263,9 +269,9 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
 
             uint32 topOffsetEnd = hexItAlt[1] * PIXEL_SIZE;
             uint32 topTail = (hexWidth - (hexItAlt[0] + hexItAlt[1])) * PIXEL_SIZE;
-            uint8* bgrN = bgrEnd;
+            uint8* bgrN = bgrRef[alternator ^ 1];
 
-            for (uint8* bgr = bgrRow; bgr < bgrEnd; bgr += PIXEL_SIZE, bgrN += PIXEL_SIZE)
+            for (uint8* bgr = bgrRef[alternator]; bgr < bgrEnd; bgr += PIXEL_SIZE, bgrN += PIXEL_SIZE)
             {
                 // get the write range
                 uint8* pixEnd = pix + pixOffsetEnd;
@@ -294,8 +300,8 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
         last = hexRef[alternator];
 
         // Body
-        bgrRow = bgrEnd;
-        bgrEnd += bgrWidth;
+        bgrRow += bgrWidth;
+        bgrEnd = bgrRow + bgrWidth;
         if (alternator)
             pix += offset;
 
@@ -321,6 +327,9 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
         if (alternator)
             // back off on the last jump
             pix -= offset;
+
+        bgrRef[0] += bgrWidth;
+        bgrRef[1] += bgrWidth;
     }
 
     // Write top
