@@ -2875,6 +2875,18 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     }
 }
 
+void PaintUnitFloatGradient(void* data, uint8 bgrOut[3])
+{
+    float64 val = *(float64*)data;
+    assert(val >= 0.0 && val <= 3.0);
+    if (val > 1.0)
+        val = 1.0;
+
+    bgrOut[0] = (uint8)val * 0xFF;
+    bgrOut[1] = (uint8)val * 0xFF;
+    bgrOut[2] = (uint8)val * 0xFF;
+}
+
 void PaintPlotTypes(void* data, uint8 bgrOut[3])
 {
     uint8 val = *(uint8*)data;
@@ -2952,8 +2964,10 @@ void GenerateMap()
     gThrs.coast = map.seaThreshold;
     //WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
     //    map.base.data, sizeof *map.base.data, PaintElevationMap);
+    //WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
+    //    plotTypes, sizeof *plotTypes, PaintPlotTypes);
     WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
-        plotTypes, sizeof *plotTypes, PaintPlotTypes);
+        map.base.data, sizeof *map.base.data, PaintUnitFloatGradient);
 
     if (iter == 10)
     {
