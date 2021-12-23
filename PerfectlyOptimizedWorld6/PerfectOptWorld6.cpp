@@ -2882,9 +2882,9 @@ void PaintUnitFloatGradient(void* data, uint8 bgrOut[3])
     if (val > 1.0)
         val = 1.0;
 
-    bgrOut[0] = (uint8)val * 0xFF;
-    bgrOut[1] = (uint8)val * 0xFF;
-    bgrOut[2] = (uint8)val * 0xFF;
+    bgrOut[0] = (uint8)(val * 0xFF);
+    bgrOut[1] = (uint8)(val * 0xFF);
+    bgrOut[2] = (uint8)(val * 0xFF);
 }
 
 void PaintPlotTypes(void* data, uint8 bgrOut[3])
