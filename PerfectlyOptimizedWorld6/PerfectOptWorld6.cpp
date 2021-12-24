@@ -33,10 +33,10 @@ struct FloatMap
     float64* data = nullptr;
 
     // TODO: check member size
-    uint16 rectX;
-    uint16 rectY;
-    uint16 rectWidth;
-    uint16 rectHeight;
+    int32 rectX;
+    int32 rectY;
+    int32 rectWidth;
+    int32 rectHeight;
 };
 
 struct ElevationMap
@@ -341,7 +341,7 @@ static MapTile gMap[200000];
 
 // --- Forward Declarations ---------------------------------------------------
 
-uint32 GetRectIndex(FloatMap* map, Coord coord);
+uint32 GetRectIndex(FloatMap* map, int32 x, int32 y);
 bool IsOnMap(FloatMap* map, Coord c);
 void InitPWArea(PWArea* area, uint32 ind, Coord c, bool trueMatch);
 void InitLineSeg(LineSeg* seg, int16 y, int16 xLeft, int16 xRight, int16 dy);
@@ -393,6 +393,112 @@ void CastMeteorUponTheEarth(PangaeaBreaker* pb, Coord c, uint8* plotTypes, uint8
 Coord GetHighestCentrality(PangaeaBreaker* pb, uint32 id);
 std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id);
 void InitCentralityScore(CentralityScore* score, ElevationMap* map, Coord c);
+
+
+// --- Map Painting -----------------------------------------------------------
+
+void PaintElevationMap(void* data, uint8 bgrOut[3])
+{
+    float64 val = *(float64*)data;
+
+    // ocean
+    if (val <= gThrs.ocean)
+    {
+        printf("Ocean");
+        // rgb: #12142b
+        bgrOut[0] = 0x2b;
+        bgrOut[1] = 0x14;
+        bgrOut[2] = 0x12;
+    }
+    // coast
+    else if (val < gThrs.coast)
+    {
+        printf("Coast");
+        // rgb: #5e6f8d
+        bgrOut[0] = 0x8d;
+        bgrOut[1] = 0x6f;
+        bgrOut[2] = 0x5e;
+    }
+    // land
+    else if (val < gThrs.hills)
+    {
+        printf("Land");
+        // rgb: #6f943d
+        bgrOut[0] = 0x3d;
+        bgrOut[1] = 0x94;
+        bgrOut[2] = 0x6f;
+    }
+    // hills
+    else if (val < gThrs.mountains)
+    {
+        printf("Hills");
+        // rgb: #a68672
+        bgrOut[0] = 0x72;
+        bgrOut[1] = 0x86;
+        bgrOut[2] = 0xa6;
+    }
+    // mountain
+    else
+    {
+        printf("Mountain");
+        // rgb: #6e5e57
+        bgrOut[0] = 0x57;
+        bgrOut[1] = 0x5e;
+        bgrOut[2] = 0x6e;
+    }
+}
+
+void PaintUnitFloatGradient(void* data, uint8 bgrOut[3])
+{
+    float64 val = *(float64*)data;
+    assert(val >= 0.0 && val <= 3.0);
+    //val /= 3;
+
+    bgrOut[0] = (uint8)(val * 0xFF);
+    bgrOut[1] = (uint8)(val * 0xFF);
+    bgrOut[2] = (uint8)(val * 0xFF);
+}
+
+void PaintPlotTypes(void* data, uint8 bgrOut[3])
+{
+    uint8 val = *(uint8*)data;
+
+
+    switch (val)
+    {
+    case ptOcean:
+        //printf("Ocean");
+        // rgb: #12142b
+        bgrOut[0] = 0x2b;
+        bgrOut[1] = 0x14;
+        bgrOut[2] = 0x12;
+        break;
+    case ptLand:
+        //printf("Land");
+        // rgb: #6f943d
+        bgrOut[0] = 0x3d;
+        bgrOut[1] = 0x94;
+        bgrOut[2] = 0x6f;
+        break;
+    case ptHills:
+        //printf("Hills");
+        // rgb: #a68672
+        bgrOut[0] = 0x72;
+        bgrOut[1] = 0x86;
+        bgrOut[2] = 0xa6;
+        break;
+    case ptMountain:
+        //printf("Mountain");
+        // rgb: #6e5e57
+        bgrOut[0] = 0x57;
+        bgrOut[1] = 0x5e;
+        bgrOut[2] = 0x6e;
+        break;
+    default:
+        printf("Miss");
+        break;
+    }
+}
 
 
 // --- Base Game Source Functions ---------------------------------------------
@@ -756,23 +862,23 @@ float64 BicubicDerivative(float64 r0[16], float64 muX, float64 muY)
 float64 GetInterpolatedValue(float64 x, float64 y, FloatMap* srcMap)
 {
     float64 points[16];
-    float64 fractionX = x - floor(x);
-    float64 fractionY = y - floor(y);
+    int32 fX = floor(x);
+    int32 fY = floor(y);
+    float64 fractionX = x - fX;
+    float64 fractionY = y - fY;
 
     // wrappedX and wrappedY are set to -1,-1 of the sampled area
     // so that the sample area is in the middle quad of the 4x4 grid
-    uint32 wrappedX = (((uint32)floor(x) - 1) % srcMap->rectWidth) + srcMap->rectX;
-    uint32 wrappedY = (((uint32)floor(y) - 1) % srcMap->rectHeight) + srcMap->rectY;
-
-    Coord c;
+    int32 wrappedX = ((fX - 1) % srcMap->rectWidth) + srcMap->rectX;
+    int32 wrappedY = ((fY - 1) % srcMap->rectHeight) + srcMap->rectY;
 
     for (uint16 pY = 0; pY < 4; ++pY)
     {
-        c.y = pY + wrappedY;
+        int32 cY = pY + wrappedY;
         for (uint16 pX = 0; pX < 4; ++pX)
         {
-            c.x = pX + wrappedX;
-            uint32 srcIndex = GetRectIndex(srcMap, c);
+            int32 cX = pX + wrappedX;
+            uint32 srcIndex = GetRectIndex(srcMap, cX, cY);
             points[(pY * 4 + pX)] = srcMap->data[srcIndex];
         }
     }
@@ -785,23 +891,23 @@ float64 GetInterpolatedValue(float64 x, float64 y, FloatMap* srcMap)
 float64 GetDerivativeValue(float64 x, float64 y, FloatMap* srcMap)
 {
     float64 points[16];
-    float64 fractionX = x - floor(x);
-    float64 fractionY = y - floor(y);
+    int32 fX = floor(x);
+    int32 fY = floor(y);
+    float64 fractionX = x - fX;
+    float64 fractionY = y - fY;
 
     // wrappedX and wrappedY are set to -1,-1 of the sampled area
     // so that the sample area is in the middle quad of the 4x4 grid
-    uint32 wrappedX = (((uint32)floor(x) - 1) % srcMap->rectWidth) + srcMap->rectX;
-    uint32 wrappedY = (((uint32)floor(y) - 1) % srcMap->rectHeight) + srcMap->rectY;
-
-    Coord c;
+    int32 wrappedX = ((fX - 1) % srcMap->rectWidth) + srcMap->rectX;
+    int32 wrappedY = ((fY - 1) % srcMap->rectHeight) + srcMap->rectY;
 
     for (uint16 pY = 0; pY < 4; ++pY)
     {
-        c.y = pY + wrappedY;
+        int32 cY = pY + wrappedY;
         for (uint16 pX = 0; pX < 4; ++pX)
         {
-            c.x = pX + wrappedX;
-            uint32 srcIndex = GetRectIndex(srcMap, c);
+            int32 cX = pX + wrappedX;
+            uint32 srcIndex = GetRectIndex(srcMap, cX, cY);
             points[(pY * 4 + pX)] = srcMap->data[srcIndex];
         }
     }
@@ -832,9 +938,13 @@ float64 GetPerlinNoise(float64 x, float64 y, uint16 destMapWidth, float64 destMa
         // TODO: clean up branching
         if (noiseMap->wrapX)
         {
-            noiseMap->rectX = (uint32)floor(noiseMap->dim.w / 2 - (destMapWidth * freq) / 2);
-            noiseMap->rectWidth = (uint32)std::max(floor(destMapWidth * freq), 1.0);
-            freqX = noiseMap->rectWidth / destMapWidth;
+            int32 rX = (int32)floor(noiseMap->dim.w / 2.0 - (destMapWidth * freq) / 2.0);
+            assert(rX >= 0 - 0x7FFF && rX <= 0x7FFF);
+            noiseMap->rectX = rX;
+            int32 rW = std::max((int32)floor(destMapWidth * freq), 1);
+            assert(rW >= 0 && rW <= 0xFFFF);
+            noiseMap->rectWidth = rW;
+            freqX = noiseMap->rectWidth / (float64)destMapWidth;
         }
         else
         {
@@ -845,9 +955,13 @@ float64 GetPerlinNoise(float64 x, float64 y, uint16 destMapWidth, float64 destMa
 
         if (noiseMap->wrapY)
         {
-            noiseMap->rectY = (uint32)floor(noiseMap->dim.h / 2 - (destMapHeight * freq) / 2);
-            noiseMap->rectHeight = (uint32)std::max(floor(destMapHeight * freq), 1.0);
-            freqY = noiseMap->rectHeight / destMapHeight;
+            int32 rY = (int32)floor(noiseMap->dim.h / 2.0 - (destMapHeight * freq) / 2.0);
+            assert(rY >= 0 - 0x7FFF && rY <= 0x7FFF);
+            noiseMap->rectY = rY;
+            int32 rH = std::max((int32)floor(destMapHeight * freq), 1);
+            assert(rH >= 0 && rH <= 0xFFFF);
+            noiseMap->rectHeight = rH;
+            freqY = noiseMap->rectHeight / (float64)destMapHeight;
         }
         else
         {
@@ -856,7 +970,7 @@ float64 GetPerlinNoise(float64 x, float64 y, uint16 destMapWidth, float64 destMa
             freqY = freq;
         }
 
-        finalValue = finalValue + GetInterpolatedValue(x * freqX, y * freqY, noiseMap) * amp;
+        finalValue += GetInterpolatedValue(x * freqX, y * freqY, noiseMap) * amp;
         freq *= 2.0;
         amp *= amplitudeChange;
     }
@@ -882,8 +996,12 @@ float64 GetPerlinDerivative(float64 x, float64 y, uint16 destMapWidth, float64 d
         // TODO: clean up branching
         if (noiseMap->wrapX)
         {
-            noiseMap->rectX = (uint32)floor(noiseMap->dim.w / 2 - (destMapWidth * freq) / 2);
-            noiseMap->rectWidth = (uint32)floor(destMapWidth * freq);
+            int32 rX = (int32)floor(noiseMap->dim.w / 2.0 - (destMapWidth * freq) / 2.0);
+            assert(rX >= 0 - 0x7FFF && rX <= 0x7FFF);
+            noiseMap->rectX = rX;
+            int32 rW = (int32)floor(destMapWidth * freq);
+            assert(rW >= 0 && rW <= 0xFFFF);
+            noiseMap->rectWidth = rW;
             freqX = noiseMap->rectWidth / destMapWidth;
         }
         else
@@ -895,8 +1013,12 @@ float64 GetPerlinDerivative(float64 x, float64 y, uint16 destMapWidth, float64 d
 
         if (noiseMap->wrapY)
         {
-            noiseMap->rectY = (uint32)floor(noiseMap->dim.h / 2 - (destMapHeight * freq) / 2);
-            noiseMap->rectHeight = (uint32)floor(destMapHeight * freq);
+            int32 rY = (int32)floor(noiseMap->dim.h / 2.0 - (destMapHeight * freq) / 2.0);
+            assert(rY >= 0 - 0x7FFF && rY <= 0x7FFF);
+            noiseMap->rectY = rY;
+            int32 rH = (int32)floor(destMapHeight * freq);
+            assert(rH >= 0 && rH <= 0xFFFF);
+            noiseMap->rectHeight = rH;
             freqY = noiseMap->rectHeight / destMapHeight;
         }
         else
@@ -906,7 +1028,7 @@ float64 GetPerlinDerivative(float64 x, float64 y, uint16 destMapWidth, float64 d
             freqY = freq;
         }
 
-        finalValue = finalValue + GetDerivativeValue(x * freqX, y * freqY, noiseMap) * amp;
+        finalValue += GetDerivativeValue(x * freqX, y * freqY, noiseMap) * amp;
         freq *= 2.0;
         amp *= amplitudeChange;
     }
@@ -1045,12 +1167,18 @@ Quadrant GetQuadrant(FloatMap* map, Coord coord)
 // Gets an index for x and y based on the current
 // rect settings. x and y are local to the defined rect.
 // Wrapping is assumed in both directions
-uint32 GetRectIndex(FloatMap* map, Coord coord)
+uint32 GetRectIndex(FloatMap* map, int32 x, int32 y)
 {
-    Coord c = { (uint16)(map->rectX + (coord.x % map->rectWidth)),
-                (uint16)(map->rectY + (coord.y % map->rectHeight)) };
+    int32 mX = map->rectX + (x % map->rectWidth);
+    int32 mY = map->rectY + (y % map->rectHeight);
+    mX %= map->dim.w;
+    mY %= map->dim.h;
+    if (mX < 0)
+        mX += map->dim.w;
+    if (mY < 0)
+        mY += map->dim.h;
 
-    return GetIndex(map, c);
+    return GetIndex(map, { (uint16)mX, (uint16)mY });
 }
 
 void Normalize(FloatMap* map)
@@ -1285,7 +1413,6 @@ uint32 GetRadiusAroundHex(FloatMap* map, Coord c, uint32 rad, Coord ** out)
     uint32 maxTiles = 1 + 6 * binCoef;
     Coord* coords = (Coord*)calloc(maxTiles, sizeof(Coord));
     *coords = c;
-    uint32 count = 1;
 
     Coord ref = c;
     Coord* it = coords + 1;
@@ -1366,7 +1493,7 @@ uint32 GetRadiusAroundHex(FloatMap* map, Coord c, uint32 rad, Coord ** out)
     }
 
     *out = coords;
-    return count;
+    return it - coords;
 }
 
 float64 GetAverageInHex(FloatMap* map, Coord c, uint32 rad)
@@ -1440,6 +1567,7 @@ void Deviate(FloatMap* map, uint32 rad)
         for (c.x = 0; c.x < map->dim.w; ++c.x, ++it)
             *it = GetStdDevInHex(map, c, rad);
 
+    assert(it - deviatedData == map->length);
     float64* old = map->data;
     map->data = deviatedData;
     free(old);
@@ -2824,110 +2952,6 @@ uint32 CountLand(uint32 len, uint8* plotTypes, uint8* terrainTypes)
     return landCount;
 }
 
-void PaintElevationMap(void* data, uint8 bgrOut[3])
-{
-    float64 val = *(float64*)data;
-
-    // ocean
-    if (val <= gThrs.ocean)
-    {
-        printf("Ocean");
-        // rgb: #12142b
-        bgrOut[0] = 0x2b;
-        bgrOut[1] = 0x14;
-        bgrOut[2] = 0x12;
-    }
-    // coast
-    else if (val < gThrs.coast)
-    {
-        printf("Coast");
-        // rgb: #5e6f8d
-        bgrOut[0] = 0x8d;
-        bgrOut[1] = 0x6f;
-        bgrOut[2] = 0x5e;
-    }
-    // land
-    else if (val < gThrs.hills)
-    {
-        printf("Land");
-        // rgb: #6f943d
-        bgrOut[0] = 0x3d;
-        bgrOut[1] = 0x94;
-        bgrOut[2] = 0x6f;
-    }
-    // hills
-    else if (val < gThrs.mountains)
-    {
-        printf("Hills");
-        // rgb: #a68672
-        bgrOut[0] = 0x72;
-        bgrOut[1] = 0x86;
-        bgrOut[2] = 0xa6;
-    }
-    // mountain
-    else
-    {
-        printf("Mountain");
-        // rgb: #6e5e57
-        bgrOut[0] = 0x57;
-        bgrOut[1] = 0x5e;
-        bgrOut[2] = 0x6e;
-    }
-}
-
-void PaintUnitFloatGradient(void* data, uint8 bgrOut[3])
-{
-    float64 val = *(float64*)data;
-    assert(val >= 0.0 && val <= 3.0);
-    if (val > 1.0)
-        val = 1.0;
-
-    bgrOut[0] = (uint8)(val * 0xFF);
-    bgrOut[1] = (uint8)(val * 0xFF);
-    bgrOut[2] = (uint8)(val * 0xFF);
-}
-
-void PaintPlotTypes(void* data, uint8 bgrOut[3])
-{
-    uint8 val = *(uint8*)data;
-
-
-    switch (val)
-    {
-    case ptOcean:
-        //printf("Ocean");
-        // rgb: #12142b
-        bgrOut[0] = 0x2b;
-        bgrOut[1] = 0x14;
-        bgrOut[2] = 0x12;
-        break;
-    case ptLand:
-        //printf("Land");
-        // rgb: #6f943d
-        bgrOut[0] = 0x3d;
-        bgrOut[1] = 0x94;
-        bgrOut[2] = 0x6f;
-        break;
-    case ptHills:
-        //printf("Hills");
-        // rgb: #a68672
-        bgrOut[0] = 0x72;
-        bgrOut[1] = 0x86;
-        bgrOut[2] = 0xa6;
-        break;
-    case ptMountain:
-        //printf("Mountain");
-        // rgb: #6e5e57
-        bgrOut[0] = 0x57;
-        bgrOut[1] = 0x5e;
-        bgrOut[2] = 0x6e;
-        break;
-    default:
-        printf("Miss");
-        break;
-    }
-}
-
 // the "main()" of the alg
 void GenerateMap()
 {
@@ -3078,6 +3102,8 @@ void GenerateTwistedPerlinMap(Dim dim, bool xWrap, bool yWrap,
     InitFloatMap(&inputNoise, dim, xWrap, yWrap);
     GenerateNoise(&inputNoise);
     Normalize(&inputNoise);
+    WriteHexMapToFile("00_initNoise.bmp", hexOffsets, dim.w, dim.h,
+        inputNoise.data, sizeof * inputNoise.data, PaintUnitFloatGradient);
 
     FloatMap freqMap;
     InitFloatMap(&freqMap, dim, xWrap, yWrap);
@@ -3097,6 +3123,8 @@ void GenerateTwistedPerlinMap(Dim dim, bool xWrap, bool yWrap,
         }
     }
     Normalize(&freqMap);
+    WriteHexMapToFile("01_freqNoise.bmp", hexOffsets, dim.w, dim.h,
+        freqMap.data, sizeof * freqMap.data, PaintUnitFloatGradient);
 
     FloatMap* twistMap = out;
     InitFloatMap(twistMap, dim, xWrap, yWrap);
@@ -3122,6 +3150,8 @@ void GenerateTwistedPerlinMap(Dim dim, bool xWrap, bool yWrap,
         }
     }
     Normalize(twistMap);
+    WriteHexMapToFile("02_twistNoise.bmp", hexOffsets, dim.w, dim.h,
+        twistMap->data, sizeof * twistMap->data, PaintUnitFloatGradient);
 
     ExitFloatMap(&freqMap);
     ExitFloatMap(&inputNoise);
@@ -3134,11 +3164,15 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
     InitFloatMap(&inputNoise, dim, xWrap, yWrap);
     GenerateBinaryNoise(&inputNoise);
     Normalize(&inputNoise);
+    WriteHexMapToFile("03_inputNoise.bmp", hexOffsets, dim.w, dim.h,
+        inputNoise.data, sizeof * inputNoise.data, PaintUnitFloatGradient);
 
     FloatMap inputNoise2;
     InitFloatMap(&inputNoise2, dim, xWrap, yWrap);
     GenerateBinaryNoise(&inputNoise2);
     Normalize(&inputNoise2);
+    WriteHexMapToFile("04_input2Noise.bmp", hexOffsets, dim.w, dim.h,
+        inputNoise2.data, sizeof * inputNoise2.data, PaintUnitFloatGradient);
 
     FloatMap* mountainMap = out;
     InitFloatMap(mountainMap, dim, xWrap, yWrap);
@@ -3162,7 +3196,7 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
         }
     }
     // mirror data
-    memcpy(stdDevMap.data, mountainMap->data, dim.w * dim.h);
+    memcpy(stdDevMap.data, mountainMap->data, dim.w * dim.h * sizeof float64);
     // init noise map
     float64* noiIns = noiseMap.data;
     for (c.y = 0; c.y < dim.h; ++c.y)
@@ -3179,6 +3213,12 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
     Deviate(&stdDevMap, 7);
     Normalize(&stdDevMap);
     Normalize(&noiseMap);
+    WriteHexMapToFile("05_mtnNoise.bmp", hexOffsets, dim.w, dim.h,
+        mountainMap->data, sizeof * mountainMap->data, PaintUnitFloatGradient);
+    WriteHexMapToFile("06_stdevNoise.bmp", hexOffsets, dim.w, dim.h,
+        stdDevMap.data, sizeof * stdDevMap.data, PaintUnitFloatGradient);
+    WriteHexMapToFile("07_noiseNoise.bmp", hexOffsets, dim.w, dim.h,
+        noiseMap.data, sizeof * noiseMap.data, PaintUnitFloatGradient);
 
     FloatMap moundMap;
     InitFloatMap(&moundMap, dim, xWrap, yWrap);
@@ -3234,6 +3274,8 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
     }
 
     Normalize(mountainMap);
+    WriteHexMapToFile("08_mtn2Noise.bmp", hexOffsets, dim.w, dim.h,
+        mountainMap->data, sizeof * mountainMap->data, PaintUnitFloatGradient);
 }
 
 float64 GetAttenuationFactor(Dim dim, Coord c)
@@ -3244,22 +3286,26 @@ float64 GetAttenuationFactor(Dim dim, Coord c)
     float64 southRange = dim.h * gSet.southAttenuationRange;
     float64 southY = southRange;
     if (c.y < southY)
-        yAttenuation = gSet.southAttenuationFactor + (c.y / southRange) * (1.0 - gSet.southAttenuationFactor);
+        yAttenuation = gSet.southAttenuationFactor + (c.y / southRange) *
+            (1.0 - gSet.southAttenuationFactor);
 
     float64 northRange = dim.h * gSet.northAttenuationRange;
     float64 northY = dim.h - northRange;
-    if (c.y > southY)
-        yAttenuation = gSet.northAttenuationFactor + ((dim.h - c.y) / northRange) * (1.0 - gSet.northAttenuationFactor);
+    if (c.y > northY)
+        yAttenuation = gSet.northAttenuationFactor + ((dim.h - c.y) / northRange) *
+            (1.0 - gSet.northAttenuationFactor);
 
     float64 eastRange = dim.w * gSet.eastAttenuationRange;
     float64 eastX = dim.w - eastRange;
     if (c.x > eastX)
-        xAttenuation = gSet.eastAttenuationFactor + ((dim.w - c.x) / eastRange) * (1.0 - gSet.eastAttenuationFactor);
+        xAttenuation = gSet.eastAttenuationFactor + ((dim.w - c.x) / eastRange) *
+            (1.0 - gSet.eastAttenuationFactor);
 
     float64 westRange = dim.w * gSet.westAttenuationRange;
     float64 westX = westRange;
     if (c.x < westX)
-        xAttenuation = gSet.westAttenuationFactor + (c.x / westRange) * (1.0 - gSet.westAttenuationFactor);
+        xAttenuation = gSet.westAttenuationFactor + (c.x / westRange) *
+            (1.0 - gSet.westAttenuationFactor);
 
     return yAttenuation * xAttenuation;
 }
@@ -3303,6 +3349,9 @@ void GenerateElevationMap(Dim dim, bool xWrap, bool yWrap, ElevationMap * out)
             *eIt *= GetAttenuationFactor(dim, c);
 
     elevationMap->seaThreshold = FindThresholdFromPercent(&elevationMap->base, 1.0 - gSet.landPercent, false);
+
+    WriteHexMapToFile("09_emapNoise.bmp", hexOffsets, dim.w, dim.h,
+        elevationMap->base.data, sizeof * elevationMap->base.data, PaintUnitFloatGradient);
 }
 
 // TODO: no lambdas
@@ -3348,6 +3397,9 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
 
     Normalize(&aboveSeaLevelMap);
 
+    WriteHexMapToFile("11_LandMap.bmp", hexOffsets, dim.w, dim.h,
+        aboveSeaLevelMap.data, sizeof * aboveSeaLevelMap.data, PaintUnitFloatGradient);
+
     FloatMap* summerMap = outSummer;
     InitFloatMap(summerMap, dim, map->base.wrapX, map->base.wrapY);
     float64 zenith = gSet.tropicLatitudes;
@@ -3369,6 +3421,9 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
 
     Smooth(summerMap, reducedWidth);
     Normalize(summerMap);
+
+    WriteHexMapToFile("12_SummerTempMap.bmp", hexOffsets, dim.w, dim.h,
+        summerMap->data, sizeof * summerMap->data, PaintUnitFloatGradient);
 
     FloatMap* winterMap = outWinter;
     InitFloatMap(winterMap, dim, map->base.wrapX, map->base.wrapY);
@@ -3392,6 +3447,9 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
     Smooth(winterMap, reducedWidth);
     Normalize(winterMap);
 
+    WriteHexMapToFile("13_WinterTempMap.bmp", hexOffsets, dim.w, dim.h,
+        winterMap->data, sizeof * winterMap->data, PaintUnitFloatGradient);
+
     FloatMap* temperatureMap = outTemp;
     InitFloatMap(temperatureMap, dim, map->base.wrapX, map->base.wrapY);
     it = temperatureMap->data;
@@ -3405,6 +3463,9 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
 
     Normalize(temperatureMap);
     ExitFloatMap(&aboveSeaLevelMap);
+
+    WriteHexMapToFile("14_TempMap.bmp", hexOffsets, dim.w, dim.h,
+        temperatureMap->data, sizeof * temperatureMap->data, PaintUnitFloatGradient);
 }
 
 void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp)
@@ -3430,6 +3491,9 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
     }
 
     Normalize(&geoMap);
+
+    WriteHexMapToFile("15_GeoMap.bmp", hexOffsets, dim.w, dim.h,
+        geoMap.data, sizeof * geoMap.data, PaintUnitFloatGradient);
 
     // Create sorted summer map
     RefMap* sortedSummerMap = (RefMap*)malloc(map->base.length * sizeof(RefMap));
@@ -3574,6 +3638,13 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
     Normalize(&rainfallWinterMap);
     Normalize(&rainfallGeostrophicMap);
 
+    WriteHexMapToFile("16_SummerRainMap.bmp", hexOffsets, dim.w, dim.h,
+        rainfallSummerMap.data, sizeof* rainfallSummerMap.data, PaintUnitFloatGradient);
+    WriteHexMapToFile("17_WinterRainMap.bmp", hexOffsets, dim.w, dim.h,
+        rainfallWinterMap.data, sizeof* rainfallWinterMap.data, PaintUnitFloatGradient);
+    WriteHexMapToFile("18_GeoRainMap.bmp", hexOffsets, dim.w, dim.h,
+        rainfallGeostrophicMap.data, sizeof* rainfallGeostrophicMap.data, PaintUnitFloatGradient);
+
     FloatMap* rainfallMap = outRain;
     InitFloatMap(rainfallMap, dim, map->base.wrapX, map->base.wrapY);
     float64* rIns = rainfallMap->data;
@@ -3585,6 +3656,9 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
         *rIns = *rsIt + *rwIt + (*rgIt * gSet.geostrophicFactor);
 
     Normalize(rainfallMap);
+
+    WriteHexMapToFile("19_RainMap.bmp", hexOffsets, dim.w, dim.h,
+        rainfallMap->data, sizeof* rainfallMap->data, PaintUnitFloatGradient);
 
     ExitFloatMap(&moistureMap3);
     ExitFloatMap(&rainfallGeostrophicMap);
@@ -3821,11 +3895,14 @@ void ApplyTerrain(uint32 len, uint8* plotTypes, uint8* terrainTypes)
 
 uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, FloatMap* outTemp, uint8 ** outPlot)
 {
-    PWRandSeed();
+    PWRandSeed(gSet.fixedSeed);
 
     ElevationMap* eMap = outElev;
     GenerateElevationMap(dim, gSet.wrapX, gSet.wrapY, eMap);
     FillInLakes(eMap);
+
+    WriteHexMapToFile("10_FilledLakesNoise.bmp", hexOffsets, dim.w, dim.h,
+        eMap->base.data, sizeof * eMap->base.data, PaintUnitFloatGradient);
 
     FloatMap* rainfallMap = outRain;
     FloatMap* temperatureMap = outTemp;
@@ -3845,6 +3922,9 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
 
     Normalize(&diffMap);
 
+    WriteHexMapToFile("20_DiffMap.bmp", hexOffsets, dim.w, dim.h,
+        diffMap.data, sizeof * diffMap.data, PaintUnitFloatGradient);
+
     ins = diffMap.data;
     float64* eIt = eMap->base.data;
 
@@ -3854,6 +3934,9 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
                 *ins += *eIt * 1.1;
 
     Normalize(&diffMap);
+
+    WriteHexMapToFile("21_DiffMapBoost.bmp", hexOffsets, dim.w, dim.h,
+        diffMap.data, sizeof * diffMap.data, PaintUnitFloatGradient);
 
     gThrs.hills = FindThresholdFromPercent(&diffMap, gSet.hillsPercent, true);
     gThrs.mountains = FindThresholdFromPercent(&diffMap, gSet.mountainsPercent, true);
