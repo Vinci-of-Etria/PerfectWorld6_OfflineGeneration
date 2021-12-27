@@ -9,7 +9,7 @@
 #include <string.h>
 
 
-// BMP setup
+// --- BMP Layout -------------------------------------------------------------
 
 static uint8 const formatHeader[] = {
     0,0,     // signature
@@ -35,7 +35,6 @@ static uint8 const infoHeader[] = {
 static uint8 const pixel[] = {
     0, 0, 0 // blue, green, red
 };
-
 
 static uint32 const FORMAT_SIZE = sizeof formatHeader;
 static uint32 const INFO_SIZE = sizeof infoHeader;
@@ -84,14 +83,9 @@ static void setBitmapInfoHeader(BMPHeader* header, uint32 width, uint32 height)
     *(uint16*)header->bitsPerPixel = PIXEL_SIZE * 8;
 }
 
-static void writeBMPFile(char const* filename, uint32 width, uint32 height, uint8* pixelBytes)
+static void writeBMPFile(char const* filename, BMPHeader* header, uint8* pixelBytes,
+    uint32 width, uint32 byteWidth, uint32 byteLen, uint32 padding)
 {
-    uint32 byteWidth = width * PIXEL_SIZE;
-    uint32 byteLen = byteWidth * height;
-
-    uint32 padding = 4 - (byteWidth % 4);
-    uint32 stride = byteWidth + padding;
-
     FILE* bmp = fopen(filename, "wb");
     if (!bmp)
     {
@@ -99,10 +93,7 @@ static void writeBMPFile(char const* filename, uint32 width, uint32 height, uint
         return;
     }
 
-    BMPHeader header;
-    setBitmapFormatHeader(&header, stride, height);
-    setBitmapInfoHeader(&header, width, height);
-    fwrite((uint8*)&header, 1, sizeof header, bmp);
+    fwrite((uint8*)header, 1, sizeof *header, bmp);
 
     uint8* line = pixelBytes;
     uint8* end = pixelBytes + byteLen;
@@ -116,80 +107,164 @@ static void writeBMPFile(char const* filename, uint32 width, uint32 height, uint
     fclose(bmp);
 }
 
-void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width, uint32 height,
-    void* data, uint32 dataTypeByteWidth, FilterToBGRFn filterFn)
+
+// --- Globals ----------------------------------------------------------------
+
+// general properties
+uint32 width;
+uint32 height;
+uint32 len;
+// color buffer properties
+uint8* mappedBGRBuf;
+uint32 bgrByteWidth;
+uint32 bgrByteLen;
+// hex properties
+uint32 hexWidth;
+uint32 hexHeight;
+uint32 hexHalfWidth;
+uint32 hexBodyHeight;
+uint32 hexCapsHeight;
+uint32 hexCapHeight;
+uint32 hexBodyCapHeight;
+uint32 const* hexCapBotOffsets;
+uint32 const* hexCapTopOffsets;
+// hex buffer properties
+uint8* imgBuf;
+uint32 pixWidth;
+uint32 pixHeight;
+uint32 pixLen;
+uint32 byteWidth;
+uint32 byteLen;
+uint32 padding;
+// bmp properties
+BMPHeader header;
+
+
+// --- Writer -----------------------------------------------------------------
+
+void InitImageWriter(uint32 _width, uint32 _height, uint32 const* hexDef)
 {
-    if (!hexDef || !width || !height)
+    if (!_width || !_height)
     {
-        printf("No hexmap to write - def: %s - w: %u - h: %u\n", 
-            hexDef ? "exists" : "DNE", width, height);
+        printf("Map has no size: w: %u - h: %u\n", _width, _height);
+        return;
+    }
+    if (!hexDef)
+    {
+        printf("No hex def!\n");
         return;
     }
 
-    uint32 len = width * height;
+    // general properties
 
-    uint32 hexWidth = hexDef[0];
-    uint32 hexHeight = hexDef[1];
-    uint32 hexBodyHeight = hexDef[2];
-    uint32 const* hexOffsets = hexDef + 3;
+    width = _width;
+    height = _height;
+    len = width * height;
+
+
+    // color buffer properties
+
+    bgrByteWidth = PIXEL_SIZE * width;
+    bgrByteLen = PIXEL_SIZE * len;
+
+    mappedBGRBuf = (uint8*)malloc(bgrByteWidth);
+
+
+    // hex properties
+
+    hexWidth = hexDef[0];
+    hexHeight = hexDef[1];
+    hexBodyHeight = hexDef[2];
+    hexCapBotOffsets = hexDef + 3;
     // The width and height need to be even so that they are tileable
     assert(hexWidth % 2 == 0 && hexHeight % 2 == 0);
 
-    uint32 halfHexWidth = hexWidth / 2;
-    uint32 hexPairHeight = hexHeight + hexBodyHeight;
-    uint32 hexCapsHeight = hexHeight - hexBodyHeight;
-    uint32 hexCapHeight = hexCapsHeight / 2;
-    uint32 hexBodyCapHeight = hexBodyHeight + hexCapHeight;
-    uint32 const* hexOffsetsTop = hexOffsets + (hexCapHeight * 2);
+    hexHalfWidth = hexWidth / 2;
+    hexCapsHeight = hexHeight - hexBodyHeight;
+    hexCapHeight = hexCapsHeight / 2;
+    hexBodyCapHeight = hexBodyHeight + hexCapHeight;
+    hexCapTopOffsets = hexCapBotOffsets + (hexCapHeight * 2);
 
-    uint32 pixWidth = (width * hexWidth);
+
+    // hex buffer properties
+
+    pixWidth = (width * hexWidth);
     // add for tile overlap from the back and forth of the hexes
     if (height > 1)
-        pixWidth += halfHexWidth;
-    uint32 byteWidth = pixWidth * PIXEL_SIZE;
-
-    uint32 pixHeight = ((height / 2) * (hexHeight + hexBodyHeight)) + hexCapHeight;
+        pixWidth += hexHalfWidth;
+    pixHeight = ((height / 2) * (hexHeight + hexBodyHeight)) + hexCapHeight;
     // add row if odd number of rows
     if (height % 2)
         pixHeight += hexBodyCapHeight;
+    pixLen = pixWidth * pixHeight;
 
-    uint32 byteLen = byteWidth * pixHeight;
+    byteWidth = PIXEL_SIZE * pixWidth;
+    byteLen = PIXEL_SIZE * pixLen;
 
-    // pre convert pixels
-    uint32 pixLen = len * PIXEL_SIZE;
-    uint8* mappedBGR = (uint8*)malloc(pixLen);
+    imgBuf = (uint8*)malloc(byteLen);
+    if (!mappedBGRBuf || !imgBuf)
+    {
+        printf("Ran out of memory initializing image writer!\n");
+        assert(0);
+        return;
+    }
+    memset(imgBuf, 0xFF, byteLen);
 
-    uint8* it = mappedBGR;
-    uint8* end = it + pixLen;
+
+    // bmp header properties
+
+    padding = 4 - (byteWidth % 4);
+    uint32 stride = byteWidth + padding;
+
+    setBitmapFormatHeader(&header, stride, pixHeight);
+    setBitmapInfoHeader(&header, pixWidth, pixHeight);
+}
+
+void ExitImageWriter()
+{
+    free(imgBuf);
+    free(mappedBGRBuf);
+}
+
+void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn filterFn)
+{
+    if (!data || !filterFn)
+    {
+        printf("No data to write - data: %s - fn: %s\n",
+            data ? "exists" : "DNE", filterFn ? "exists" : "DNE");
+        return;
+    }
+
+    // pre-convert pixels
+    uint8* it = mappedBGRBuf;
+    uint8* end = it + bgrByteLen;
     uint8* src = (uint8*)data;
 
     for (; it < end; it += PIXEL_SIZE, src += dataTypeByteWidth)
         filterFn(src, it);
 
 
-    // create image buffer
-    uint8* image = (uint8*)malloc(byteLen * sizeof *image);
-    memset(image, 0xFF, byteLen * sizeof * image);
+    // prep image buffer
+    //memset(imgBuf, 0xFF, byteLen);
 
-    uint8* pix = image;
     it = (uint8*)data;
     end = it + (len * dataTypeByteWidth);
+    uint8* pix = imgBuf;
 
 
     // Write hexes
 
     uint32 offset = 0;
     if (height > 1)
-        offset = halfHexWidth * PIXEL_SIZE;
+        offset = hexHalfWidth * PIXEL_SIZE;
 
 
     // Write bottom
 
     // Cap
-    uint32 const* hexIt = hexOffsets;
-    uint32 bgrWidth = width * PIXEL_SIZE;
-    uint8* bgrRow = mappedBGR;
-    uint8* bgrEnd = mappedBGR + bgrWidth;
+    uint32 const* hexIt = hexCapBotOffsets;
+    uint8* bgrRow = mappedBGRBuf;
+    uint8* bgrEnd = mappedBGRBuf + bgrByteWidth;
 
     for (uint32 i = 0; i < hexCapHeight; ++i, hexIt += 2)
     {
@@ -245,13 +320,13 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
 
     // Interlaced caps
     uint32 const* hexRef[] = {
-        hexOffsets,
-        hexOffsetsTop
+        hexCapBotOffsets,
+        hexCapTopOffsets
     };
-    uint32 const* last = hexOffsets;
-    uint8 * bgrRef[] = {
-        mappedBGR + bgrWidth,
-        mappedBGR
+    uint32 const* last = hexCapBotOffsets;
+    uint8* bgrRef[] = {
+        mappedBGRBuf + bgrByteWidth,
+        mappedBGRBuf
     };
     uint32 alternator = 1;
 
@@ -259,7 +334,7 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
     {
         hexIt = hexRef[alternator];
         uint32 const* hexItAlt = last;
-        bgrEnd = bgrRef[alternator] + bgrWidth;
+        bgrEnd = bgrRef[alternator] + bgrByteWidth;
 
         for (uint32 i = 0; i < hexCapHeight; ++i, hexIt += 2, hexItAlt += 2)
         {
@@ -300,8 +375,8 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
         last = hexRef[alternator];
 
         // Body
-        bgrRow += bgrWidth;
-        bgrEnd = bgrRow + bgrWidth;
+        bgrRow += bgrByteWidth;
+        bgrEnd = bgrRow + bgrByteWidth;
         if (alternator)
             pix += offset;
 
@@ -328,14 +403,14 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
             // back off on the last jump
             pix -= offset;
 
-        bgrRef[0] += bgrWidth;
-        bgrRef[1] += bgrWidth;
+        bgrRef[0] += bgrByteWidth;
+        bgrRef[1] += bgrByteWidth;
     }
 
     // Write top
 
     // Cap
-    hexIt = hexOffsets + (hexCapHeight * 2);
+    hexIt = hexCapTopOffsets;
 
     // offset the caps on even rows
     if (height % 2 == 0)
@@ -369,8 +444,14 @@ void WriteHexMapToFile(char const* filename, uint32 const* hexDef, uint32 width,
         pix += offset - pixOffset;
     }
 
-    writeBMPFile(filename, pixWidth, pixHeight, image);
+    // verify iteration
+    if (height % 2 == 0)
+        pix -= offset;
+    uint32 diff = pix - imgBuf;
+    assert(diff == byteLen);
+}
 
-    free(image);
-    free(mappedBGR);
+void SaveMap(char const* filename)
+{
+    writeBMPFile(filename, &header, imgBuf, pixWidth, byteWidth, byteLen, padding);
 }

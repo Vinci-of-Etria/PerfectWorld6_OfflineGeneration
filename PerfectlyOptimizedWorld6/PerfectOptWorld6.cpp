@@ -500,6 +500,57 @@ void PaintPlotTypes(void* data, uint8 bgrOut[3])
     }
 }
 
+void PaintTerrainTypes(void* data, uint8 bgrOut[3])
+{
+    uint8 val = *(uint8*)data;
+
+    switch (val)
+    {
+    case tSNOW:
+        // rgb: #cec4df
+        bgrOut[0] = 0xdf;
+        bgrOut[1] = 0xc4;
+        bgrOut[2] = 0xce;
+        break;
+    case tTUNDRA:
+        // rgb: #8d6c65
+        bgrOut[0] = 0x65;
+        bgrOut[1] = 0x6c;
+        bgrOut[2] = 0x8d;
+        break;
+    case tPLAINS:
+        // rgb: #abaa45
+        bgrOut[0] = 0x45;
+        bgrOut[1] = 0xaa;
+        bgrOut[2] = 0xab;
+        break;
+    case tGRASS:
+        // rgb: #6f8c35
+        bgrOut[0] = 0x35;
+        bgrOut[1] = 0x8c;
+        bgrOut[2] = 0x6f;
+        break;
+    case tDESERT:
+        // rgb: #e9b76e
+        bgrOut[0] = 0x6e;
+        bgrOut[1] = 0xb7;
+        bgrOut[2] = 0xe9;
+        break;
+    case tCOAST:
+        // rgb: #5e6f8d
+        bgrOut[0] = 0x8d;
+        bgrOut[1] = 0x6f;
+        bgrOut[2] = 0x5e;
+        break;
+    default:
+        //printf("Ocean");
+        // rgb: #12142b
+        bgrOut[0] = 0x2b;
+        bgrOut[1] = 0x14;
+        bgrOut[2] = 0x12;
+        break;
+    }
+}
 
 // --- Base Game Source Functions ---------------------------------------------
 
@@ -1263,7 +1314,7 @@ float64 FindThresholdFromPercent(FloatMap* map, float64 percent, bool excludeZer
         size = map->length;
     }
 
-    std::sort(maplist.begin(), maplist.end());
+    std::sort(maplist.begin(), maplist.begin() + size);
     // storing the value locally to prevent potential issues with alloca
     float64 retval = maplist[(uint32)(size * percent)];
     return retval;
@@ -2958,6 +3009,8 @@ void GenerateMap()
     Dim dim = { gSet.width, gSet.height };
     uint32 len = dim.w * dim.h;
 
+    InitImageWriter(dim.w, dim.h, hexOffsets);
+
     uint8* plotTypes = (uint8*)calloc(len, sizeof *plotTypes);
     uint8* terrainTypes = (uint8*)calloc(len, sizeof *terrainTypes);
     ElevationMap map;
@@ -2974,6 +3027,11 @@ void GenerateMap()
         FinalAlterations(&map, plotTypes, terrainTypes);
         GenerateCoasts(&map, plotTypes, terrainTypes);
 
+        DrawHexes(plotTypes, sizeof *plotTypes, PaintPlotTypes);
+        SaveMap("22_PlotTypes.bmp");
+        DrawHexes(terrainTypes, sizeof *terrainTypes, PaintTerrainTypes);
+        SaveMap("23_TerrainTypes.bmp");
+
         InitPangaeaBreaker(&pb, &map, terrainTypes);
         if (BreakPangaeas(&pb, plotTypes, terrainTypes))
             break;
@@ -2986,12 +3044,10 @@ void GenerateMap()
     }
 
     gThrs.coast = map.seaThreshold;
-    //WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
-    //    map.base.data, sizeof *map.base.data, PaintElevationMap);
-    //WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
-    //    plotTypes, sizeof *plotTypes, PaintPlotTypes);
-    WriteHexMapToFile("map.bmp", hexOffsets, dim.w, dim.h,
-        map.base.data, sizeof *map.base.data, PaintUnitFloatGradient);
+    //DrawHexes(map.base.data, sizeof *map.base.data, PaintElevationMap);
+    //DrawHexes(plotTypes, sizeof *plotTypes, PaintPlotTypes);
+    DrawHexes(map.base.data, sizeof *map.base.data, PaintUnitFloatGradient);
+    SaveMap("map.bmp");
 
     if (iter == 10)
     {
@@ -3089,6 +3145,8 @@ void GenerateMap()
 
     //AddGoodies(dim.w, dim.h);
     //print("finished adding goodies")
+
+    ExitImageWriter();
 }
 
 
@@ -3102,8 +3160,8 @@ void GenerateTwistedPerlinMap(Dim dim, bool xWrap, bool yWrap,
     InitFloatMap(&inputNoise, dim, xWrap, yWrap);
     GenerateNoise(&inputNoise);
     Normalize(&inputNoise);
-    WriteHexMapToFile("00_initNoise.bmp", hexOffsets, dim.w, dim.h,
-        inputNoise.data, sizeof * inputNoise.data, PaintUnitFloatGradient);
+    DrawHexes(inputNoise.data, sizeof *inputNoise.data, PaintUnitFloatGradient);
+    SaveMap("00_initNoise.bmp");
 
     FloatMap freqMap;
     InitFloatMap(&freqMap, dim, xWrap, yWrap);
@@ -3123,8 +3181,8 @@ void GenerateTwistedPerlinMap(Dim dim, bool xWrap, bool yWrap,
         }
     }
     Normalize(&freqMap);
-    WriteHexMapToFile("01_freqNoise.bmp", hexOffsets, dim.w, dim.h,
-        freqMap.data, sizeof * freqMap.data, PaintUnitFloatGradient);
+    DrawHexes(freqMap.data, sizeof *freqMap.data, PaintUnitFloatGradient);
+    SaveMap("01_freqNoise.bmp");
 
     FloatMap* twistMap = out;
     InitFloatMap(twistMap, dim, xWrap, yWrap);
@@ -3150,8 +3208,8 @@ void GenerateTwistedPerlinMap(Dim dim, bool xWrap, bool yWrap,
         }
     }
     Normalize(twistMap);
-    WriteHexMapToFile("02_twistNoise.bmp", hexOffsets, dim.w, dim.h,
-        twistMap->data, sizeof * twistMap->data, PaintUnitFloatGradient);
+    DrawHexes(twistMap->data, sizeof *twistMap->data, PaintUnitFloatGradient);
+    SaveMap("02_twistNoise.bmp");
 
     ExitFloatMap(&freqMap);
     ExitFloatMap(&inputNoise);
@@ -3164,15 +3222,15 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
     InitFloatMap(&inputNoise, dim, xWrap, yWrap);
     GenerateBinaryNoise(&inputNoise);
     Normalize(&inputNoise);
-    WriteHexMapToFile("03_inputNoise.bmp", hexOffsets, dim.w, dim.h,
-        inputNoise.data, sizeof * inputNoise.data, PaintUnitFloatGradient);
+    DrawHexes(inputNoise.data, sizeof *inputNoise.data, PaintUnitFloatGradient);
+    SaveMap("03_inputNoise.bmp");
 
     FloatMap inputNoise2;
     InitFloatMap(&inputNoise2, dim, xWrap, yWrap);
     GenerateBinaryNoise(&inputNoise2);
     Normalize(&inputNoise2);
-    WriteHexMapToFile("04_input2Noise.bmp", hexOffsets, dim.w, dim.h,
-        inputNoise2.data, sizeof * inputNoise2.data, PaintUnitFloatGradient);
+    DrawHexes(inputNoise2.data, sizeof *inputNoise2.data, PaintUnitFloatGradient);
+    SaveMap("04_input2Noise.bmp");
 
     FloatMap* mountainMap = out;
     InitFloatMap(mountainMap, dim, xWrap, yWrap);
@@ -3213,12 +3271,12 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
     Deviate(&stdDevMap, 7);
     Normalize(&stdDevMap);
     Normalize(&noiseMap);
-    WriteHexMapToFile("05_mtnNoise.bmp", hexOffsets, dim.w, dim.h,
-        mountainMap->data, sizeof * mountainMap->data, PaintUnitFloatGradient);
-    WriteHexMapToFile("06_stdevNoise.bmp", hexOffsets, dim.w, dim.h,
-        stdDevMap.data, sizeof * stdDevMap.data, PaintUnitFloatGradient);
-    WriteHexMapToFile("07_noiseNoise.bmp", hexOffsets, dim.w, dim.h,
-        noiseMap.data, sizeof * noiseMap.data, PaintUnitFloatGradient);
+    DrawHexes(mountainMap->data, sizeof *mountainMap->data, PaintUnitFloatGradient);
+    SaveMap("05_mtnNoise.bmp");
+    DrawHexes(stdDevMap.data, sizeof *stdDevMap.data, PaintUnitFloatGradient);
+    SaveMap("06_stdevNoise.bmp");
+    DrawHexes(noiseMap.data, sizeof *noiseMap.data, PaintUnitFloatGradient);
+    SaveMap("07_noiseNoise.bmp");
 
     FloatMap moundMap;
     InitFloatMap(&moundMap, dim, xWrap, yWrap);
@@ -3274,8 +3332,8 @@ void GenerateMountainMap(Dim dim, bool xWrap, bool yWrap, float64 initFreq,
     }
 
     Normalize(mountainMap);
-    WriteHexMapToFile("08_mtn2Noise.bmp", hexOffsets, dim.w, dim.h,
-        mountainMap->data, sizeof * mountainMap->data, PaintUnitFloatGradient);
+    DrawHexes(mountainMap->data, sizeof *mountainMap->data, PaintUnitFloatGradient);
+    SaveMap("08_mtn2Noise.bmp");
 }
 
 float64 GetAttenuationFactor(Dim dim, Coord c)
@@ -3350,8 +3408,8 @@ void GenerateElevationMap(Dim dim, bool xWrap, bool yWrap, ElevationMap * out)
 
     elevationMap->seaThreshold = FindThresholdFromPercent(&elevationMap->base, 1.0 - gSet.landPercent, false);
 
-    WriteHexMapToFile("09_emapNoise.bmp", hexOffsets, dim.w, dim.h,
-        elevationMap->base.data, sizeof * elevationMap->base.data, PaintUnitFloatGradient);
+    DrawHexes(elevationMap->base.data, sizeof *elevationMap->base.data, PaintUnitFloatGradient);
+    SaveMap("09_emapNoise.bmp");
 }
 
 // TODO: no lambdas
@@ -3397,8 +3455,8 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
 
     Normalize(&aboveSeaLevelMap);
 
-    WriteHexMapToFile("11_LandMap.bmp", hexOffsets, dim.w, dim.h,
-        aboveSeaLevelMap.data, sizeof * aboveSeaLevelMap.data, PaintUnitFloatGradient);
+    DrawHexes(aboveSeaLevelMap.data, sizeof *aboveSeaLevelMap.data, PaintUnitFloatGradient);
+    SaveMap("11_LandMap.bmp");
 
     FloatMap* summerMap = outSummer;
     InitFloatMap(summerMap, dim, map->base.wrapX, map->base.wrapY);
@@ -3422,8 +3480,8 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
     Smooth(summerMap, reducedWidth);
     Normalize(summerMap);
 
-    WriteHexMapToFile("12_SummerTempMap.bmp", hexOffsets, dim.w, dim.h,
-        summerMap->data, sizeof * summerMap->data, PaintUnitFloatGradient);
+    DrawHexes(summerMap->data, sizeof *summerMap->data, PaintUnitFloatGradient);
+    SaveMap("12_SummerTempMap.bmp");
 
     FloatMap* winterMap = outWinter;
     InitFloatMap(winterMap, dim, map->base.wrapX, map->base.wrapY);
@@ -3447,8 +3505,8 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
     Smooth(winterMap, reducedWidth);
     Normalize(winterMap);
 
-    WriteHexMapToFile("13_WinterTempMap.bmp", hexOffsets, dim.w, dim.h,
-        winterMap->data, sizeof * winterMap->data, PaintUnitFloatGradient);
+    DrawHexes(winterMap->data, sizeof *winterMap->data, PaintUnitFloatGradient);
+    SaveMap("13_WinterTempMap.bmp");
 
     FloatMap* temperatureMap = outTemp;
     InitFloatMap(temperatureMap, dim, map->base.wrapX, map->base.wrapY);
@@ -3464,8 +3522,8 @@ void GenerateTempMaps(ElevationMap* map, FloatMap* outSummer, FloatMap* outWinte
     Normalize(temperatureMap);
     ExitFloatMap(&aboveSeaLevelMap);
 
-    WriteHexMapToFile("14_TempMap.bmp", hexOffsets, dim.w, dim.h,
-        temperatureMap->data, sizeof * temperatureMap->data, PaintUnitFloatGradient);
+    DrawHexes(temperatureMap->data, sizeof *temperatureMap->data, PaintUnitFloatGradient);
+    SaveMap("14_TempMap.bmp");
 }
 
 void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp)
@@ -3492,8 +3550,8 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
 
     Normalize(&geoMap);
 
-    WriteHexMapToFile("15_GeoMap.bmp", hexOffsets, dim.w, dim.h,
-        geoMap.data, sizeof * geoMap.data, PaintUnitFloatGradient);
+    DrawHexes(geoMap.data, sizeof *geoMap.data, PaintUnitFloatGradient);
+    SaveMap("15_GeoMap.bmp");
 
     // Create sorted summer map
     RefMap* sortedSummerMap = (RefMap*)malloc(map->base.length * sizeof(RefMap));
@@ -3515,10 +3573,10 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
         for (c.x = 0; c.x < dim.w; ++c.x, ++wIns, ++wIt)
             *wIns = { c, *wIt };
 
-    std::sort(sortedSummerMap, sIns, [](RefMap& a, RefMap& b) { return a.val < b.val; });
+    std::sort(sortedWinterMap, wIns, [](RefMap& a, RefMap& b) { return a.val < b.val; });
 
     RefMap* sortedGeoMap = (RefMap*)malloc(map->base.length * sizeof(RefMap));
-    uint32 geoIndex = 0;
+    RefMap* geoIns = sortedGeoMap;
 
     for (uint32 w = wNPolar; w <= wSPolar; ++w)
     {
@@ -3533,7 +3591,7 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
                 bottomY = 0;
             std::pair<Dir, Dir> dir = GetGeostrophicWindDirections((WindZone)w);
 
-            uint32 xStart = 0, xStop = 0, yStart = 0, yStop = 0;
+            int32 xStart = 0, xStop = 0, yStart = 0, yStop = 0;
             int32 incX = 0, incY = 0;
 
             if (dir.first == dSW || dir.first == dSE)
@@ -3562,33 +3620,41 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
                 incX = 1;
             }
 
-            Coord c;
-
-            for (c.y = yStart; c.y <= yStop; c.y += incY)
+            // TODO: resolve terrible condition
+            for (int32 y = yStart; incY > 0 ? y <= yStop : y >= yStop; y += incY)
             {
-                c.x = xStart;
-                uint32 xEnd = xStop;
+                assert(y >= 0 && y < dim.h);
+                int32 x = xStart;
+                int32 xEnd = xStop;
+
                 // each line should start on water to avoid vast areas without rain
-                for (; c.x <= xStop; c.x += incX)
+                for (; incX > 0 ? x <= xStop : x >= xStop; x += incX)
                 {
-                    if (IsBelowSeaLevel(map, c))
+                    assert(x >= 0 && x < dim.w);
+                    if (IsBelowSeaLevel(map, { (uint16)x, (uint16)y }))
                     {
-                        xEnd = c.x + dim.w * incX;
+                        xEnd = x + dim.w * incX;
+                        break;
                     }
                 }
 
-                xEnd -= incX;
-
-                for (; c.x < xEnd; c.x += incX)
+                for (; incX > 0 ? x < xEnd : x > xEnd; x += incX, ++geoIns)
                 {
-                    uint32 i = GetIndex(&map->base, c);
-                    assert(geoIndex < map->base.length);
-                    sortedGeoMap[geoIndex] = { c, geoMap.data[i] };
-                    ++geoIndex;
+                    int32 rx = x;
+                    if (rx < 0)
+                        rx += dim.w;
+                    if (rx >= dim.w)
+                        rx -= dim.w;
+                    assert(rx >= 0 && rx < dim.w);
+                    Coord crd = { (uint16)rx, (uint16)y };
+                    uint32 i = GetIndex(&map->base, crd);
+                    *geoIns = { crd, geoMap.data[i] };
                 }
             }
         }
     }
+    uint32 dbgGeoCnt = geoIns - sortedGeoMap;
+    assert(dbgGeoCnt <= map->base.length);
 
     FloatMap rainfallSummerMap;
     InitFloatMap(&rainfallSummerMap, dim, map->base.wrapX, map->base.wrapY);
@@ -3615,7 +3681,7 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
     FloatMap moistureMap3;
     InitFloatMap(&moistureMap3, dim, map->base.wrapX, map->base.wrapY);
     RefMap* geoIt = sortedGeoMap;
-    RefMap* geoEnd = sortedGeoMap + geoIndex;
+    RefMap* geoEnd = geoIns;
 
     for (; geoIt < geoEnd; ++geoIt)
         DistributeRain(geoIt->c, map, temperatureMap, &geoMap, &rainfallGeostrophicMap, &moistureMap3, true);
@@ -3638,12 +3704,12 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
     Normalize(&rainfallWinterMap);
     Normalize(&rainfallGeostrophicMap);
 
-    WriteHexMapToFile("16_SummerRainMap.bmp", hexOffsets, dim.w, dim.h,
-        rainfallSummerMap.data, sizeof* rainfallSummerMap.data, PaintUnitFloatGradient);
-    WriteHexMapToFile("17_WinterRainMap.bmp", hexOffsets, dim.w, dim.h,
-        rainfallWinterMap.data, sizeof* rainfallWinterMap.data, PaintUnitFloatGradient);
-    WriteHexMapToFile("18_GeoRainMap.bmp", hexOffsets, dim.w, dim.h,
-        rainfallGeostrophicMap.data, sizeof* rainfallGeostrophicMap.data, PaintUnitFloatGradient);
+    DrawHexes(rainfallSummerMap.data, sizeof *rainfallSummerMap.data, PaintUnitFloatGradient);
+    SaveMap("16_SummerRainMap.bmp");
+    DrawHexes(rainfallWinterMap.data, sizeof *rainfallWinterMap.data, PaintUnitFloatGradient);
+    SaveMap("17_WinterRainMap.bmp");
+    DrawHexes(rainfallGeostrophicMap.data, sizeof *rainfallGeostrophicMap.data, PaintUnitFloatGradient);
+    SaveMap("18_GeoRainMap.bmp");
 
     FloatMap* rainfallMap = outRain;
     InitFloatMap(rainfallMap, dim, map->base.wrapX, map->base.wrapY);
@@ -3657,8 +3723,8 @@ void GenerateRainfallMap(ElevationMap* map, FloatMap* outRain, FloatMap* outTemp
 
     Normalize(rainfallMap);
 
-    WriteHexMapToFile("19_RainMap.bmp", hexOffsets, dim.w, dim.h,
-        rainfallMap->data, sizeof* rainfallMap->data, PaintUnitFloatGradient);
+    DrawHexes(rainfallMap->data, sizeof *rainfallMap->data, PaintUnitFloatGradient);
+    SaveMap("19_RainMap.bmp");
 
     ExitFloatMap(&moistureMap3);
     ExitFloatMap(&rainfallGeostrophicMap);
@@ -3901,8 +3967,8 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
     GenerateElevationMap(dim, gSet.wrapX, gSet.wrapY, eMap);
     FillInLakes(eMap);
 
-    WriteHexMapToFile("10_FilledLakesNoise.bmp", hexOffsets, dim.w, dim.h,
-        eMap->base.data, sizeof * eMap->base.data, PaintUnitFloatGradient);
+    DrawHexes(eMap->base.data, sizeof *eMap->base.data, PaintUnitFloatGradient);
+    SaveMap("10_FilledLakesNoise.bmp");
 
     FloatMap* rainfallMap = outRain;
     FloatMap* temperatureMap = outTemp;
@@ -3922,8 +3988,8 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
 
     Normalize(&diffMap);
 
-    WriteHexMapToFile("20_DiffMap.bmp", hexOffsets, dim.w, dim.h,
-        diffMap.data, sizeof * diffMap.data, PaintUnitFloatGradient);
+    DrawHexes(diffMap.data, sizeof *diffMap.data, PaintUnitFloatGradient);
+    SaveMap("20_DiffMap.bmp");
 
     ins = diffMap.data;
     float64* eIt = eMap->base.data;
@@ -3935,8 +4001,8 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
 
     Normalize(&diffMap);
 
-    WriteHexMapToFile("21_DiffMapBoost.bmp", hexOffsets, dim.w, dim.h,
-        diffMap.data, sizeof * diffMap.data, PaintUnitFloatGradient);
+    DrawHexes(diffMap.data, sizeof *diffMap.data, PaintUnitFloatGradient);
+    SaveMap("21_DiffMapBoost.bmp");
 
     gThrs.hills = FindThresholdFromPercent(&diffMap, gSet.hillsPercent, true);
     gThrs.mountains = FindThresholdFromPercent(&diffMap, gSet.mountainsPercent, true);

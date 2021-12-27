@@ -9,7 +9,8 @@ wrapX=true
 wrapY=false
 
 // Set to 0 if you want the seed randomly generated
-fixedSeed=0
+fixedSeed=
+//123456
 
 
 

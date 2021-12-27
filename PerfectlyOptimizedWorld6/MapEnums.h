@@ -142,7 +142,7 @@ enum MapSize
 // --- Features
 
 #undef FEATURE_TYPES
-#define FEATURE_TYPES                      \
+#define FEATURE_TYPES \
     CONVERT(NONE)                  \
 \
     CONVERT(FLOODPLAINS)           \
