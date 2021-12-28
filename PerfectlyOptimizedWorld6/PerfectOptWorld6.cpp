@@ -4457,6 +4457,8 @@ std::vector<uint32> GetRadiusAroundCell(Dim dim, Coord c, uint32 rad)
     {
         // move here 1 West
         GetNeighbor(NULL, c, dW, &c);
+        if (c.x < dim.w && c.y < dim.h)
+            cellList.push_back((uint32)c.y * dim.w + c.x);
 
         for (uint32 i = 0; i < r; ++i)
         {
@@ -4493,12 +4495,14 @@ std::vector<uint32> GetRadiusAroundCell(Dim dim, Coord c, uint32 rad)
                 cellList.push_back((uint32)c.y * dim.w + c.x);
         }
 
-        for (uint32 i = 0; i < r; ++i)
+        for (uint32 i = 0; i < r - 1; ++i)
         {
             GetNeighbor(NULL, c, dNW, &c);
             if (c.x < dim.w && c.y < dim.h)
                 cellList.push_back((uint32)c.y * dim.w + c.x);
         }
+
+        GetNeighbor(NULL, c, dNW, &c);
     }
 
     return cellList;
@@ -4510,6 +4514,10 @@ std::vector<uint32> GetRingAroundCell(Dim dim, Coord c, uint32 rad)
 
     for (uint32 i = 0; i < rad; ++i)
         GetNeighbor(NULL, c, dW, &c);
+
+    // TODO: remove, temporarily recreating bug in original program
+    if (c.x < dim.w && c.y < dim.h)
+        cellList.push_back((uint32)c.y * dim.w + c.x);
 
     for (uint32 i = 0; i < rad; ++i)
     {
@@ -4772,10 +4780,12 @@ std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id)
         d[i] = 0;
         Q.push_back(i);
 
-        while (!Q.empty())
+        // lazy fifo
+        uint32 qIt = 0;
+        while (qIt != Q.size())
         {
-            uint32 v = Q.back();
-            Q.pop_back();
+            uint32 v = Q[qIt];
+            ++qIt;
             S.push_back(v);
 
             for (uint32 w : cs[v].neighborList)
@@ -4788,6 +4798,7 @@ std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id)
 
                 if (d[w] == d[v] + 1)
                 {
+                    //assert(sigma[w] + sigma[v] > sigma[w]);
                     sigma[w] += sigma[v];
                     P[w].push_back(v);
                 }
