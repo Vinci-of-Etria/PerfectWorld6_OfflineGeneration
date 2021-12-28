@@ -358,3 +358,6 @@ MigrationBackup/
 PerfectlyOptimizedWorld6/Assets/
 PerfectlyOptimizedWorld6/Core/
 PerfectlyOptimizedWorld6/Map/
+
+# Debug files
+*.bmp
