@@ -4799,6 +4799,7 @@ std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id)
                 if (d[w] == d[v] + 1)
                 {
                     //assert(sigma[w] + sigma[v] > sigma[w]);
+                    // TODO: this method currently overflows int max, need to use other method such as distance
                     sigma[w] += sigma[v];
                     P[w].push_back(v);
                 }
