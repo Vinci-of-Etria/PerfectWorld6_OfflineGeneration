@@ -312,12 +312,15 @@
     <Xml Include="Core\PerfectWorld6Config.xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Civ6MapWriter.h" />
     <ClInclude Include="MapEnums.h" />
     <ClInclude Include="ImageWriter.h" />
     <ClInclude Include="PerfectOptWorld6.h" />
+    <ClInclude Include="sqlite3.h" />
     <ClInclude Include="typedefs.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Civ6MapWriter.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ImageWriter.cpp" />
     <ClCompile Include="PerfectOptWorld6.cpp" />

@@ -4073,8 +4073,6 @@ uint32 GeneratePlotTypes(Dim dim, ElevationMap* outElev, FloatMap* outRain, Floa
                 *pIns = ptMountain;
 
     ExitFloatMap(&diffMap);
-    // TODO: see if above maps are still needed
-    //*outPlot = plotTypes;
     return len;
 }
 

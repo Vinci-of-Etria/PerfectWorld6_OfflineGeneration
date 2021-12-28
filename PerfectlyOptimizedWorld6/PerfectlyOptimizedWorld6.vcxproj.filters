@@ -46,6 +46,15 @@
     <Filter Include="ModData\Assets\Maps\Utility\exp2">
       <UniqueIdentifier>{afcaca4c-9ac0-4a69-bafc-3e83a547603b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Database Management">
+      <UniqueIdentifier>{39fe568a-4456-4ee5-8f3f-371bfc48f347}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Debug">
+      <UniqueIdentifier>{c671b2b6-c72d-466b-be35-9bfbdce7025f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Generation">
+      <UniqueIdentifier>{cc3b8464-4d7d-47c2-a657-5e3b1c6dc619}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="PerfectWorld6.modinfo">
@@ -559,17 +568,38 @@
     </Xml>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="PerfectOptWorld6.h" />
     <ClInclude Include="typedefs.h" />
-    <ClInclude Include="MapEnums.h" />
-    <ClInclude Include="ImageWriter.h" />
+    <ClInclude Include="sqlite3.h">
+      <Filter>Database Management</Filter>
+    </ClInclude>
+    <ClInclude Include="Civ6MapWriter.h">
+      <Filter>Database Management</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageWriter.h">
+      <Filter>Debug</Filter>
+    </ClInclude>
+    <ClInclude Include="MapEnums.h">
+      <Filter>Generation</Filter>
+    </ClInclude>
+    <ClInclude Include="PerfectOptWorld6.h">
+      <Filter>Generation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PerfectOptWorld6.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ImageWriter.cpp" />
+    <ClCompile Include="Civ6MapWriter.cpp">
+      <Filter>Database Management</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageWriter.cpp">
+      <Filter>Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="PerfectOptWorld6.cpp">
+      <Filter>Generation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="standard_pw6_settings.txt" />
+    <Text Include="standard_pw6_settings.txt">
+      <Filter>Generation</Filter>
+    </Text>
   </ItemGroup>
 </Project>
