@@ -552,6 +552,53 @@ void PaintTerrainTypes(void* data, uint8 bgrOut[3])
     }
 }
 
+void PaintIDS(void* data, uint8 bgrOut[3])
+{
+    float64 val = *(float64*)data;
+    val /= 500.0;
+
+    bgrOut[0] = (uint8)(val * 0xFF);
+    bgrOut[1] = (uint8)(val * 0xFF);
+    bgrOut[2] = (uint8)(val * 0xFF);
+}
+
+StampSet StampElevationViaPlotTypes(void* data)
+{
+    uint8 val = *(uint8*)data;
+
+    StampSet stamp = { 0, 0, 0 };
+
+    switch (val)
+    {
+    case ptHills:
+        stamp.elevation = esHills;
+        break;
+    case ptMountain:
+        stamp.elevation = esMountains;
+        break;
+    }
+
+    return stamp;
+}
+
+StampSet StampViaMapTile(void* data)
+{
+    MapTile* plot = (MapTile*)data;
+
+    StampSet stamp = { 0, 0, 0 };
+
+    if (plot->terrain >= tMountainsStart)
+        stamp.elevation = esMountains;
+    else if (plot->terrain >= tHillsStart)
+        stamp.elevation = esHills;
+
+    stamp.feature = plot->feature;
+    stamp.resource = plot->resource;
+
+    return stamp;
+}
+
+
 // --- Base Game Source Functions ---------------------------------------------
 
 
@@ -3030,6 +3077,7 @@ void GenerateMap()
         DrawHexes(plotTypes, sizeof *plotTypes, PaintPlotTypes);
         SaveMap("22_PlotTypes.bmp");
         DrawHexes(terrainTypes, sizeof *terrainTypes, PaintTerrainTypes);
+        AddStamps(plotTypes, sizeof * plotTypes, StampElevationViaPlotTypes);
         SaveMap("23_TerrainTypes.bmp");
 
         InitPangaeaBreaker(&pb, &map, terrainTypes);
@@ -4542,6 +4590,8 @@ bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
 
     ttMatch = pb->terrainTypes;
     DefineAreas(&pb->areaMap, [](uint32 i) { return ttMatch[i] == tOCEAN; }, false);
+    DrawHexes(pb->areaMap.base.data, sizeof *pb->areaMap.base.data, PaintIDS);
+    SaveMap("areas00.bmp");
 
     uint32 meteorCount = 0;
 
@@ -4556,6 +4606,11 @@ bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
             ++meteorCount;
 
             DefineAreas(&pb->areaMap, [](uint32 i) { return ttMatch[i] == tOCEAN; }, false);
+            DrawHexes(pb->areaMap.base.data, sizeof * pb->areaMap.base.data, PaintIDS);
+            char name[] = "areas00.bmp";
+            name[6] = '0' + (meteorCount % 10);
+            name[5] = '0' + (meteorCount / 10);
+            SaveMap(name);
         }
 
     if (meteorCount == maximumMeteorCount)
@@ -4711,7 +4766,7 @@ std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id)
         std::fill(sigma.begin(), sigma.end(), 0);
         std::fill(d.begin(), d.end(), -1);
         std::for_each(P.begin(), P.end(), [](std::vector<uint32>& list) { list.clear(); });
-        std::fill(delta.begin(), delta.end(), -1);
+        std::fill(delta.begin(), delta.end(), 0);
 
         sigma[i] = 1;
         d[i] = 0;
@@ -4750,8 +4805,6 @@ std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id)
             if (w != i)
                 cs[w].centrality += delta[w];
         }
-
-        ++i;
     }
 
     return cs;

@@ -2,7 +2,7 @@
 
 #include "typedefs.h"
 
-static const uint32 hexOffsets[] =
+static uint32 const hexOffsets[] =
 {
     // w, h, body length
     18, 20, 10,
@@ -27,10 +27,20 @@ static const uint32 hexOffsets[] =
 
 // Features
 
-static const uint32 mtnStamp[] =
+static uint8 const hillStamp[] =
 {
-    // y offset
-    6,
+    // y offset, rows
+    4, 3,
+
+    4, 4, 9, 10, 13,
+    4, 5, 8, 11, 12,
+    2, 6, 7,
+};
+
+static uint8 const mtnStamp[] =
+{
+    // y offset, rows
+    6, 11,
 
     3, 2, 10, 15,
     3, 3, 9, 14,
@@ -42,13 +52,13 @@ static const uint32 mtnStamp[] =
     3, 6, 9, 11,
     2, 10, 11,
     1, 10,
-    1, 10
+    1, 10,
 };
 
-static const uint32 volcanoStamp[] =
+static uint8 const volcanoStamp[] =
 {
-    // y offset
-    5,
+    // y offset, rows
+    5, 13,
 
     2, 4, 13,
     2, 5, 12,
@@ -65,10 +75,10 @@ static const uint32 volcanoStamp[] =
     1, 9,
 };
 
-static const uint32 iceStamp[] =
+static uint8 const iceStamp[] =
 {
-    // y offset
-    2,
+    // y offset, rows
+    2, 13,
 
     1, 8,
     4, 7, 8, 9, 11,
@@ -85,20 +95,10 @@ static const uint32 iceStamp[] =
     1, 9,
 };
 
-static const uint32 hillStamp[] =
+static uint8 const oasisStamp[] =
 {
-    // y offset
-    4,
-
-    4, 4, 9, 10, 13,
-    4, 5, 8, 11, 12,
-    2, 6, 7,
-};
-
-static const uint32 oasisStamp[] =
-{
-    // y offset
-    3,
+    // y offset, rows
+    3, 4,
 
     4, 7, 8, 9, 10,
     8, 5, 6, 7, 8, 9, 10, 11, 12,
@@ -106,10 +106,10 @@ static const uint32 oasisStamp[] =
     12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
 };
 
-static const uint32 reefStamp[] =
+static uint8 const reefStamp[] =
 {
-    // y offset
-    2,
+    // y offset, rows
+    2, 6,
 
     2, 9, 10,
     3, 5, 6, 7,
@@ -119,10 +119,10 @@ static const uint32 reefStamp[] =
     1, 7,
 };
 
-static const uint32 forestStamp[] =
+static uint8 const forestStamp[] =
 {
-    // y offset
-    7,
+    // y offset, rows
+    7, 9,
 
     1, 13,
     7, 10, 11, 12, 13, 14, 15, 16,
@@ -135,10 +135,10 @@ static const uint32 forestStamp[] =
     1, 13,
 };
 
-static const uint32 jungleStamp[] =
+static uint8 const jungleStamp[] =
 {
-    // y offset
-    7,
+    // y offset, rows
+    7, 8,
 
     3, 11, 12, 13,
     1, 12,
@@ -150,10 +150,10 @@ static const uint32 jungleStamp[] =
     4, 10, 11, 14, 15,
 };
 
-static const uint32 marshStamp[] =
+static uint8 const marshStamp[] =
 {
-    // y offset
-    9,
+    // y offset, rows
+    9, 5,
 
     5, 11, 12, 13, 14, 15,
     5, 10, 12, 13, 14, 16,
@@ -162,10 +162,10 @@ static const uint32 marshStamp[] =
     1, 13,
 };
 
-static const uint32 floodplainStamp[] =
+static uint8 const floodplainStamp[] =
 {
-    // y offset
-    8,
+    // y offset, rows
+    8, 7,
 
     6, 11, 12, 13, 14, 15, 16,
     5, 10, 11, 12, 13, 14,
@@ -176,20 +176,20 @@ static const uint32 floodplainStamp[] =
     4, 12, 13, 14, 15,
 };
 
-static const uint32 volcanicSoilStamp[] =
+static uint8 const volcanicSoilStamp[] =
 {
-    // y offset
-    10,
+    // y offset, rows
+    10, 3,
 
     7, 10, 11, 12, 13, 14, 15, 16,
     5, 11, 12, 13, 14, 15,
     2, 12, 13,
 };
 
-static const uint32 geothermalStamp[] =
+static uint8 const geothermalStamp[] =
 {
-    // y offset
-    8,
+    // y offset, rows
+    8, 5,
 
     3, 12, 13, 14,
     3, 10, 11, 15,
@@ -198,10 +198,10 @@ static const uint32 geothermalStamp[] =
     3, 13, 14, 15,
 };
 
-static const uint32 naturalWonderStamp[] =
+static uint8 const naturalWonderStamp[] =
 {
-    // y offset
-    8,
+    // y offset, rows
+    8, 7,
 
     1, 13,
     3, 12, 13, 14,
@@ -214,10 +214,10 @@ static const uint32 naturalWonderStamp[] =
 
 // Resources
 
-static const uint32 bonusStamp[] =
+static uint8 const bonusStamp[] =
 {
-    // y offset
-    9,
+    // y offset, rows
+    9, 6,
 
     2, 4, 5,
     2, 4, 5,
@@ -227,10 +227,10 @@ static const uint32 bonusStamp[] =
     2, 4, 5,
 };
 
-static const uint32 luxuryStamp[] =
+static uint8 const luxuryStamp[] =
 {
-    // y offset
-    9,
+    // y offset, rows
+    9, 6,
 
     3, 3, 4, 5,
     2, 2, 6,
@@ -240,10 +240,10 @@ static const uint32 luxuryStamp[] =
     2, 3, 5,
 };
 
-static const uint32 strategicStamp[] =
+static uint8 const strategicStamp[] =
 {
-    // y offset
-    9,
+    // y offset, rows
+    9, 6,
 
     2, 2, 7,
     2, 3, 6,
@@ -270,7 +270,7 @@ struct StampSet
 typedef void(*FilterToBGRFn)(void*, uint8[3]);
 typedef StampSet(*FilterStampsFn)(void*);
 
-void InitImageWriter(uint32 width, uint32 height, uint32 const* hexDe);
+void InitImageWriter(uint32 width, uint32 height, uint32 const* hexDef);
 void ExitImageWriter();
 
 void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn filterFn);

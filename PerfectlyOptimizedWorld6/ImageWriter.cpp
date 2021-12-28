@@ -8,6 +8,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "MapEnums.h"
+
 
 // --- BMP Layout -------------------------------------------------------------
 
@@ -103,6 +105,7 @@ static void writeBMPFile(char const* filename, BMPHeader* header, uint8* pixelBy
         fwrite(line, PIXEL_SIZE, width, bmp);
         fwrite(pixel, 1, padding, bmp);
     }
+    assert(line == pixelBytes + byteLen);
 
     fclose(bmp);
 }
@@ -133,6 +136,8 @@ uint8* imgBuf;
 uint32 pixWidth;
 uint32 pixHeight;
 uint32 pixLen;
+uint32 byteHexWidth;
+uint32 byteHexHalfWidth;
 uint32 byteWidth;
 uint32 byteLen;
 uint32 padding;
@@ -167,7 +172,7 @@ void InitImageWriter(uint32 _width, uint32 _height, uint32 const* hexDef)
     bgrByteWidth = PIXEL_SIZE * width;
     bgrByteLen = PIXEL_SIZE * len;
 
-    mappedBGRBuf = (uint8*)malloc(bgrByteWidth);
+    mappedBGRBuf = (uint8*)malloc(bgrByteLen);
 
 
     // hex properties
@@ -198,6 +203,8 @@ void InitImageWriter(uint32 _width, uint32 _height, uint32 const* hexDef)
         pixHeight += hexBodyCapHeight;
     pixLen = pixWidth * pixHeight;
 
+    byteHexWidth = PIXEL_SIZE * hexWidth;
+    byteHexHalfWidth = PIXEL_SIZE * hexHalfWidth;
     byteWidth = PIXEL_SIZE * pixWidth;
     byteLen = PIXEL_SIZE * pixLen;
 
@@ -226,12 +233,12 @@ void ExitImageWriter()
     free(mappedBGRBuf);
 }
 
-void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn filterFn)
+void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn)
 {
-    if (!data || !filterFn)
+    if (!data || !FilterFn)
     {
         printf("No data to write - data: %s - fn: %s\n",
-            data ? "exists" : "DNE", filterFn ? "exists" : "DNE");
+            data ? "exists" : "DNE", FilterFn ? "exists" : "DNE");
         return;
     }
 
@@ -241,7 +248,7 @@ void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn filterFn)
     uint8* src = (uint8*)data;
 
     for (; it < end; it += PIXEL_SIZE, src += dataTypeByteWidth)
-        filterFn(src, it);
+        FilterFn(src, it);
 
 
     // prep image buffer
@@ -449,6 +456,173 @@ void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn filterFn)
         pix -= offset;
     uint32 diff = pix - imgBuf;
     assert(diff == byteLen);
+}
+
+static void ApplyStamp(uint8* pos, uint8 const* stamp)
+{
+    uint8 yOffset = stamp[0];
+    uint8 rows = stamp[1];
+    uint8 const* it = stamp + 2;
+
+    uint8* row = pos + (byteWidth * yOffset);
+
+    for (uint8 r = 0; r < rows; ++r, row += byteWidth)
+    {
+        uint8 pixelNum = *it;
+        ++it;
+        uint8 const* pixEnd = it + pixelNum;
+
+        for (; it < pixEnd; ++it)
+        {
+            uint32 offset = *it * PIXEL_SIZE;
+
+            row[offset + 0] = 0x00;
+            row[offset + 1] = 0x00;
+            row[offset + 2] = 0x00;
+        }
+    }
+}
+
+void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn)
+{
+    uint8* it = (uint8*)data;
+    uint8* rowRef = imgBuf;
+    uint32 rowJump = byteWidth * hexBodyCapHeight;
+    uint32 dblWidth = 2 * dataTypeByteWidth;
+
+    for (uint32 y = 0; y < height; ++y)
+    {
+        uint8* pos = rowRef;
+        if (y % 2)
+            pos += byteHexHalfWidth;
+
+        for (uint32 x = 0; x < width; ++x, it += dataTypeByteWidth, pos += byteHexWidth)
+        {
+            StampSet stamps = FilterFn(it);
+
+            switch (stamps.elevation)
+            {
+            case esHills:
+                ApplyStamp(pos, hillStamp);
+                break;
+            case esMountains:
+                // TODO: make mnt/volcano icons cohesive
+                if (stamps.feature != fVOLCANO)
+                    ApplyStamp(pos, mtnStamp);
+                break;
+            default:
+                break;
+            }
+
+            switch (stamps.feature)
+            {
+            case fFOREST:
+                ApplyStamp(pos, forestStamp);
+                break;
+            case fJUNGLE:
+                ApplyStamp(pos, jungleStamp);
+                break;
+            case fMARSH:
+                ApplyStamp(pos, marshStamp);
+                break;
+            case fFLOODPLAINS:
+            case fFLOODPLAINS_GRASSLAND:
+            case fFLOODPLAINS_PLAINS:
+                ApplyStamp(pos, floodplainStamp);
+                break;
+                // features that dominate the tile
+            case fVOLCANO:
+                ApplyStamp(pos, volcanoStamp);
+                break;
+            case fICE:
+                ApplyStamp(pos, iceStamp);
+                break;
+            case fOASIS:
+                ApplyStamp(pos, oasisStamp);
+                break;
+            case fREEF:
+                ApplyStamp(pos, reefStamp);
+                break;
+                // pretty sure these two aren't on the map initially
+            case fVOLCANIC_SOIL:
+                ApplyStamp(pos, volcanicSoilStamp);
+                break;
+            case fGEOTHERMAL_FISSURE:
+                ApplyStamp(pos, geothermalStamp);
+                break;
+            default:
+                if (stamps.feature >= fWondersStart)
+                    ApplyStamp(pos, naturalWonderStamp);
+                break;
+            }
+
+            switch (stamps.resource)
+            {
+            case rBANANAS:
+            case rCATTLE:
+            case rCOPPER:
+            case rCRABS:
+            case rDEER:
+            case rFISH:
+            case rRICE:
+            case rSHEEP:
+            case rSTONE:
+            case rWHEAT:
+            case rMAIZE:
+                ApplyStamp(pos, bonusStamp);
+                break;
+            case rCITRUS:
+            case rCOCOA:
+            case rCOFFEE:
+            case rCOTTON:
+            case rDYES:
+            case rDIAMONDS:
+            case rFURS:
+            case rGYPSUM:
+            case rINCENSE:
+            case rIVORY:
+            case rJADE:
+            case rMARBLE:
+            case rMERCURY:
+            case rPEARLS:
+            case rSALT:
+            case rSILK:
+            case rSILVER:
+            case rSPICES:
+            case rSUGAR:
+            case rTEA:
+            case rTOBACCO:
+            case rTRUFFLES:
+            case rWHALES:
+            case rWINE:
+            case rAMBER:
+            case rOLIVES:
+            case rTURTLES:
+            case rHONEY:
+            case rP0K_PAPYRUS:
+            case rP0K_PENGUINS:
+            case rP0K_PLUMS:
+            case rCVS_POMEGRANATES:
+            case rP0K_MAPLE:
+            case rP0K_OPAL:
+                ApplyStamp(pos, luxuryStamp);
+                break;
+            case rHORSES:
+            case rIRON:
+            case rNITER:
+            case rCOAL:
+            case rOIL:
+            case rALUMINUM:
+            case rURANIUM:
+                ApplyStamp(pos, strategicStamp);
+                break;
+            default:
+                break;
+            }
+        }
+
+        rowRef += rowJump;
+    }
 }
 
 void SaveMap(char const* filename)
