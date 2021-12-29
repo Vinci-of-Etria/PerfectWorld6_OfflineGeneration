@@ -584,6 +584,9 @@
     <ClInclude Include="PerfectOptWorld6.h">
       <Filter>Generation</Filter>
     </ClInclude>
+    <ClInclude Include="MapData.h">
+      <Filter>Generation</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

@@ -313,6 +313,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Civ6MapWriter.h" />
+    <ClInclude Include="MapData.h" />
     <ClInclude Include="MapEnums.h" />
     <ClInclude Include="ImageWriter.h" />
     <ClInclude Include="PerfectOptWorld6.h" />
