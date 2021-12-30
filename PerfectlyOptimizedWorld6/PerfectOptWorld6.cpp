@@ -2990,6 +2990,16 @@ void GenerateMap()
 {
     Dim dim = { gSet.width, gSet.height };
     uint32 len = dim.w * dim.h;
+    MapDetails details =
+    {
+        gSet.width,
+        gSet.height,
+        90,
+        -90,
+        gSet.wrapX,
+        gSet.wrapY,
+        msSTANDARD
+    };
 
     InitImageWriter(dim.w, dim.h, hexOffsets);
 
@@ -3031,7 +3041,7 @@ void GenerateMap()
     //DrawHexes(plotTypes, sizeof *plotTypes, PaintPlotTypes);
     DrawHexes(map.base.data, sizeof *map.base.data, PaintUnitFloatGradient);
     SaveMap("map.bmp");
-    SaveToCiv6Map(NULL);
+    SaveToCiv6Map("ItsAMap", &details, gMap);
 
     if (iter == 10)
     {

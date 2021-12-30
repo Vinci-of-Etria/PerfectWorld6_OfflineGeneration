@@ -355,6 +355,9 @@ MigrationBackup/
 # code into my own personal repo.
 *.modinfo
 *.lua
+*.Civ6Map
+*.civ6map
+*.CIV6MAP
 PerfectlyOptimizedWorld6/Assets/
 PerfectlyOptimizedWorld6/Core/
 PerfectlyOptimizedWorld6/Map/

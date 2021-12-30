@@ -2,4 +2,4 @@
 
 struct MapTile;
 
-void SaveToCiv6Map(MapTile* map);
+void SaveToCiv6Map(char const* name, MapDetails* details, MapTile* map);
