@@ -253,6 +253,94 @@ static uint8 const strategicStamp[] =
     2, 2, 7,
 };
 
+// Rivers
+
+static uint8 const eEdgeStamp[] =
+{
+    // y offset, rows
+    5, 10,
+
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+};
+
+static uint8 const seEdgeStamp[] =
+{
+    // y offset, rows
+    0, 6,
+
+    1, 9,
+    2, 10, 11,
+    2, 12, 13,
+    1, 14,
+    2, 15, 16,
+    1, 17,
+};
+
+static uint8 const swEdgeStamp[] =
+{
+    // y offset, rows
+    0, 6,
+
+    1, 8,
+    2, 6, 7,
+    2, 4, 5,
+    1, 3,
+    2, 1, 2,
+    1, 0,
+};
+
+static uint8 const wEdgeStamp[] =
+{
+    // y offset, rows
+    5, 10,
+
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+};
+
+static uint8 const nwEdgeStamp[] =
+{
+    // y offset, rows
+    14, 6,
+
+    1, 0,
+    2, 1, 2,
+    1, 3,
+    2, 4, 5,
+    2, 6, 7,
+    1, 8,
+};
+
+static uint8 const neEdgeStamp[] =
+{
+    // y offset, rows
+    14, 6,
+
+    1, 17,
+    2, 15, 16,
+    1, 14,
+    2, 12, 13,
+    2, 10, 11,
+    1, 9,
+};
+
 enum ElevationStamp
 {
     esNone,
@@ -267,15 +355,27 @@ struct StampSet
     uint8 resource;
 };
 
+#define EDGE_E  (1 << 0)
+#define EDGE_SE (1 << 1)
+#define EDGE_SW (1 << 2)
+#define EDGE_W  (1 << 3)
+#define EDGE_NW (1 << 4)
+#define EDGE_NE (1 << 5)
+
+static uint8 const stampBlack[3]  = { 0x00, 0x00, 0x00 };
+static uint8 const stampBlue[3]   = { 0x00, 0xD1, 0xFF };
+static uint8 const stampOrange[3] = { 0xFF, 0xA1, 0x00 };
+
 typedef void(*FilterToBGRFn)(void*, uint8[3]);
 typedef StampSet(*FilterStampsFn)(void*);
+typedef uint8(*FilterEdgeFn)(void*);
 
-void InitImageWriter(uint32 width, uint32 height, uint32 const* hexDef);
+void InitImageWriter(uint32 width, uint32 height,
+    bool _wrapX, bool _wrapY, uint32 const* hexDef);
 void ExitImageWriter();
 
-void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn filterFn);
-void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn filterFn);
-//TODO: void AddRivers();
-//TODO: void AddCliffs();
+void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn);
+void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn);
+void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8 color[3]);
 
 void SaveMap(char const* filename);

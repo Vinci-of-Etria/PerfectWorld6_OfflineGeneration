@@ -116,9 +116,11 @@ static void writeBMPFile(char const* filename, BMPHeader* header, uint8* pixelBy
 // general properties
 uint32 width;
 uint32 height;
+bool wrapX;
+bool wrapY;
 uint32 len;
 // color buffer properties
-uint8* mappedBGRBuf;
+uint8* buffer;
 uint32 bgrByteWidth;
 uint32 bgrByteLen;
 // hex properties
@@ -147,7 +149,7 @@ BMPHeader header;
 
 // --- Writer -----------------------------------------------------------------
 
-void InitImageWriter(uint32 _width, uint32 _height, uint32 const* hexDef)
+void InitImageWriter(uint32 _width, uint32 _height, bool _wrapX, bool _wrapY, uint32 const* hexDef)
 {
     if (!_width || !_height)
     {
@@ -164,6 +166,8 @@ void InitImageWriter(uint32 _width, uint32 _height, uint32 const* hexDef)
 
     width = _width;
     height = _height;
+    wrapX = _wrapX;
+    wrapY = _wrapY;
     len = width * height;
 
 
@@ -172,7 +176,7 @@ void InitImageWriter(uint32 _width, uint32 _height, uint32 const* hexDef)
     bgrByteWidth = PIXEL_SIZE * width;
     bgrByteLen = PIXEL_SIZE * len;
 
-    mappedBGRBuf = (uint8*)malloc(bgrByteLen);
+    buffer = (uint8*)malloc(bgrByteLen);
 
 
     // hex properties
@@ -209,7 +213,7 @@ void InitImageWriter(uint32 _width, uint32 _height, uint32 const* hexDef)
     byteLen = PIXEL_SIZE * pixLen;
 
     imgBuf = (uint8*)malloc(byteLen);
-    if (!mappedBGRBuf || !imgBuf)
+    if (!buffer || !imgBuf)
     {
         printf("Ran out of memory initializing image writer!\n");
         assert(0);
@@ -230,7 +234,7 @@ void InitImageWriter(uint32 _width, uint32 _height, uint32 const* hexDef)
 void ExitImageWriter()
 {
     free(imgBuf);
-    free(mappedBGRBuf);
+    free(buffer);
 }
 
 void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn)
@@ -243,7 +247,7 @@ void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn)
     }
 
     // pre-convert pixels
-    uint8* it = mappedBGRBuf;
+    uint8* it = buffer;
     uint8* end = it + bgrByteLen;
     uint8* src = (uint8*)data;
 
@@ -270,8 +274,8 @@ void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn)
 
     // Cap
     uint32 const* hexIt = hexCapBotOffsets;
-    uint8* bgrRow = mappedBGRBuf;
-    uint8* bgrEnd = mappedBGRBuf + bgrByteWidth;
+    uint8* bgrRow = buffer;
+    uint8* bgrEnd = buffer + bgrByteWidth;
 
     for (uint32 i = 0; i < hexCapHeight; ++i, hexIt += 2)
     {
@@ -332,8 +336,8 @@ void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn)
     };
     uint32 const* last = hexCapBotOffsets;
     uint8* bgrRef[] = {
-        mappedBGRBuf + bgrByteWidth,
-        mappedBGRBuf
+        buffer + bgrByteWidth,
+        buffer
     };
     uint32 alternator = 1;
 
@@ -458,7 +462,7 @@ void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn)
     assert(diff == byteLen);
 }
 
-static void ApplyStamp(uint8* pos, uint8 const* stamp)
+static void ApplyStamp(uint8* pos, uint8 const* stamp, uint8 const rgb[3])
 {
     uint8 yOffset = stamp[0];
     uint8 rows = stamp[1];
@@ -476,15 +480,22 @@ static void ApplyStamp(uint8* pos, uint8 const* stamp)
         {
             uint32 offset = *it * PIXEL_SIZE;
 
-            row[offset + 0] = 0x00;
-            row[offset + 1] = 0x00;
-            row[offset + 2] = 0x00;
+            row[offset + 0] = rgb[2];
+            row[offset + 1] = rgb[1];
+            row[offset + 2] = rgb[0];
         }
     }
 }
 
 void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn)
 {
+    if (!data || !FilterFn)
+    {
+        printf("No data to write - data: %s - fn: %s\n",
+            data ? "exists" : "DNE", FilterFn ? "exists" : "DNE");
+        return;
+    }
+
     uint8* it = (uint8*)data;
     uint8* rowRef = imgBuf;
     uint32 rowJump = byteWidth * hexBodyCapHeight;
@@ -503,12 +514,12 @@ void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn)
             switch (stamps.elevation)
             {
             case esHills:
-                ApplyStamp(pos, hillStamp);
+                ApplyStamp(pos, hillStamp, stampBlack);
                 break;
             case esMountains:
                 // TODO: make mnt/volcano icons cohesive
                 if (stamps.feature != fVOLCANO)
-                    ApplyStamp(pos, mtnStamp);
+                    ApplyStamp(pos, mtnStamp, stampBlack);
                 break;
             default:
                 break;
@@ -517,42 +528,42 @@ void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn)
             switch (stamps.feature)
             {
             case fFOREST:
-                ApplyStamp(pos, forestStamp);
+                ApplyStamp(pos, forestStamp, stampBlack);
                 break;
             case fJUNGLE:
-                ApplyStamp(pos, jungleStamp);
+                ApplyStamp(pos, jungleStamp, stampBlack);
                 break;
             case fMARSH:
-                ApplyStamp(pos, marshStamp);
+                ApplyStamp(pos, marshStamp, stampBlack);
                 break;
             case fFLOODPLAINS:
             case fFLOODPLAINS_GRASSLAND:
             case fFLOODPLAINS_PLAINS:
-                ApplyStamp(pos, floodplainStamp);
+                ApplyStamp(pos, floodplainStamp, stampBlack);
                 break;
                 // features that dominate the tile
             case fVOLCANO:
-                ApplyStamp(pos, volcanoStamp);
+                ApplyStamp(pos, volcanoStamp, stampBlack);
                 break;
             case fICE:
-                ApplyStamp(pos, iceStamp);
+                ApplyStamp(pos, iceStamp, stampBlack);
                 break;
             case fOASIS:
-                ApplyStamp(pos, oasisStamp);
+                ApplyStamp(pos, oasisStamp, stampBlack);
                 break;
             case fREEF:
-                ApplyStamp(pos, reefStamp);
+                ApplyStamp(pos, reefStamp, stampBlack);
                 break;
                 // pretty sure these two aren't on the map initially
             case fVOLCANIC_SOIL:
-                ApplyStamp(pos, volcanicSoilStamp);
+                ApplyStamp(pos, volcanicSoilStamp, stampBlack);
                 break;
             case fGEOTHERMAL_FISSURE:
-                ApplyStamp(pos, geothermalStamp);
+                ApplyStamp(pos, geothermalStamp, stampBlack);
                 break;
             default:
                 if (stamps.feature >= fWondersStart)
-                    ApplyStamp(pos, naturalWonderStamp);
+                    ApplyStamp(pos, naturalWonderStamp, stampBlack);
                 break;
             }
 
@@ -569,7 +580,7 @@ void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn)
             case rSTONE:
             case rWHEAT:
             case rMAIZE:
-                ApplyStamp(pos, bonusStamp);
+                ApplyStamp(pos, bonusStamp, stampBlack);
                 break;
             case rCITRUS:
             case rCOCOA:
@@ -605,7 +616,7 @@ void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn)
             case rCVS_POMEGRANATES:
             case rP0K_MAPLE:
             case rP0K_OPAL:
-                ApplyStamp(pos, luxuryStamp);
+                ApplyStamp(pos, luxuryStamp, stampBlack);
                 break;
             case rHORSES:
             case rIRON:
@@ -614,11 +625,175 @@ void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn)
             case rOIL:
             case rALUMINUM:
             case rURANIUM:
-                ApplyStamp(pos, strategicStamp);
+                ApplyStamp(pos, strategicStamp, stampBlack);
                 break;
             default:
                 break;
             }
+        }
+
+        rowRef += rowJump;
+    }
+}
+
+void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8 color[3])
+{
+    if (!data || !FilterFn)
+    {
+        printf("No data to write - data: %s - fn: %s\n",
+            data ? "exists" : "DNE", FilterFn ? "exists" : "DNE");
+        return;
+    }
+
+
+    // pre-convert pixels
+    uint8* it = buffer;
+    uint8* end = it + len;
+    uint8* src = (uint8*)data;
+
+    for (; it < end; it += PIXEL_SIZE, src += dataTypeByteWidth)
+        *it = FilterFn(src);
+
+
+    // Propagate rivers to adjacent tiles
+    uint32 wShort = width - 1;
+
+    // handle bottom row
+    it = buffer;
+    for (uint32 w = 0; w < wShort; ++w, ++it)
+        if (*it & EDGE_E)
+            *(it + 1) |= EDGE_W;
+    // handle the end
+    if (wrapX && *it & EDGE_E)
+        *(buffer) |= EDGE_W;
+
+    // handle y wrap if it exists
+    if (wrapY)
+    {
+        it = buffer;
+        uint8* altRow = buffer + len - width;
+        uint8* last = buffer + len - 1;
+        // handle first tile
+        if (*it & EDGE_SW)
+            *(last) |= EDGE_NE;
+        if (*it & EDGE_SE)
+            *(altRow) |= EDGE_NW;
+        ++it;
+        ++altRow;
+
+        // handle the rest
+        for (uint32 w = 1; w < width; ++w, ++it, ++altRow)
+        {
+            if (*it & EDGE_SW)
+                *(altRow - 1) |= EDGE_NE;
+            if (*it & EDGE_SE)
+                *(altRow) |= EDGE_NW;
+        }
+    }
+
+    // handle the intervening rows
+    it = buffer + width;
+    uint8* altRow = buffer;
+    uint8* eWrap = buffer + width;
+    uint8* sWrap = buffer;
+    for (uint32 h = 1; h < height; ++h)
+    {
+        // handle odd row
+
+        for (uint32 w = 0; w < wShort; ++w, ++it, ++altRow)
+        {
+            if (*it & EDGE_SW)
+                *(altRow) |= EDGE_NE;
+            if (*it & EDGE_SE)
+                *(altRow + 1) |= EDGE_NW;
+            if (*it & EDGE_E)
+                *(it + 1) |= EDGE_W;
+        }
+
+        // handle end
+        if (*it & EDGE_SW)
+            *(altRow) |= EDGE_NE;
+        if (*it & EDGE_SE)
+            *(sWrap) |= EDGE_NW;
+        if (*it & EDGE_E)
+            *(eWrap) |= EDGE_W;
+
+        ++it;
+        ++altRow;
+        eWrap += width;
+        sWrap += width;
+
+        ++h;
+        // exit early if height is reached
+        if (h >= height)
+            break;
+
+
+        // handle even row
+
+        // handle start
+        if (*it & EDGE_SW)
+            *(sWrap) |= EDGE_NE;
+        if (*it & EDGE_SE)
+            *(altRow) |= EDGE_NW;
+        if (*it & EDGE_E)
+            *(it + 1) |= EDGE_W;
+        ++it;
+        ++altRow;
+
+        for (uint32 w = 1; w < wShort; ++w, ++it, ++altRow)
+        {
+            if (*it & EDGE_SW)
+                *(altRow - 1) |= EDGE_NE;
+            if (*it & EDGE_SE)
+                *(altRow) |= EDGE_NW;
+            if (*it & EDGE_E)
+                *(it + 1) |= EDGE_W;
+        }
+
+        // handle end
+        if (*it & EDGE_SW)
+            *(altRow - 1) |= EDGE_NE;
+        if (*it & EDGE_SE)
+            *(altRow) |= EDGE_NW;
+        if (*it & EDGE_E)
+            *(eWrap) |= EDGE_W;
+
+        ++it;
+        ++altRow;
+        eWrap += width;
+        sWrap += width;
+    }
+
+
+    // add stamps
+
+    uint8* it = (uint8*)data;
+    uint8* riverRef = buffer;
+    uint8* rowRef = imgBuf;
+    uint32 rowJump = byteWidth * hexBodyCapHeight;
+    uint32 dblWidth = 2 * dataTypeByteWidth;
+
+    for (uint32 y = 0; y < height; ++y)
+    {
+        uint8* pos = rowRef;
+        if (y % 2)
+            pos += byteHexHalfWidth;
+
+        for (uint32 x = 0; x < width; ++x, it += dataTypeByteWidth, pos += byteHexWidth, ++riverRef)
+        {
+            if (*riverRef & EDGE_E)
+                ApplyStamp(pos, eEdgeStamp, color);
+            if (*riverRef & EDGE_SE)
+                ApplyStamp(pos, seEdgeStamp, color);
+            if (*riverRef & EDGE_SW)
+                ApplyStamp(pos, swEdgeStamp, color);
+            if (*riverRef & EDGE_W)
+                ApplyStamp(pos, wEdgeStamp, color);
+            if (*riverRef & EDGE_NW)
+                ApplyStamp(pos, nwEdgeStamp, color);
+            if (*riverRef & EDGE_NE)
+                ApplyStamp(pos, neEdgeStamp, color);
         }
 
         rowRef += rowJump;

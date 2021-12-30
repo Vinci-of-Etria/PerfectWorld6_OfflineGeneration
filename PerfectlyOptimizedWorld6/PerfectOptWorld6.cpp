@@ -797,6 +797,15 @@ void LoadDefaultSettings(char const* settingsFile)
     }
     else
         printf("No settings file, just loading defaults.");
+
+    // Amend conflicting settings
+
+    // can't wrap y in edges won't align
+    if (gSet.wrapY && gSet.height % 2)
+    {
+        printf("WARNING: Can't wrap y if the height is odd due to grip alignment! Disabling Y wrap.");
+        gSet.wrapY = false;
+    }
 }
 
 
@@ -3001,7 +3010,7 @@ void GenerateMap()
         msSTANDARD
     };
 
-    InitImageWriter(dim.w, dim.h, hexOffsets);
+    InitImageWriter(dim.w, dim.h, gSet.wrapX, gSet.wrapY, hexOffsets);
 
     uint8* plotTypes = (uint8*)calloc(len, sizeof *plotTypes);
     uint8* terrainTypes = (uint8*)calloc(len, sizeof *terrainTypes);
