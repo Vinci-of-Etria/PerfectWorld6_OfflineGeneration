@@ -636,7 +636,7 @@ void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn)
     }
 }
 
-void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8 color[3])
+void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8 const color[3])
 {
     if (!data || !FilterFn)
     {
@@ -651,7 +651,7 @@ void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8
     uint8* end = it + len;
     uint8* src = (uint8*)data;
 
-    for (; it < end; it += PIXEL_SIZE, src += dataTypeByteWidth)
+    for (; it < end; ++it, src += dataTypeByteWidth)
         *it = FilterFn(src);
 
 
@@ -768,7 +768,7 @@ void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8
 
     // add stamps
 
-    uint8* it = (uint8*)data;
+    it = (uint8*)data;
     uint8* riverRef = buffer;
     uint8* rowRef = imgBuf;
     uint32 rowJump = byteWidth * hexBodyCapHeight;

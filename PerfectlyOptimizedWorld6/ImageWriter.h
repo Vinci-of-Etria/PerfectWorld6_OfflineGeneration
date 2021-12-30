@@ -376,6 +376,6 @@ void ExitImageWriter();
 
 void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn);
 void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn);
-void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8 color[3]);
+void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8 const color[3]);
 
 void SaveMap(char const* filename);

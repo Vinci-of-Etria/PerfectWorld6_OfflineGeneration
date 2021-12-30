@@ -487,6 +487,63 @@ void PaintTerrainTypes(void* data, uint8 bgrOut[3])
     }
 }
 
+void PaintMapTiles(void* data, uint8 bgrOut[3])
+{
+    MapTile* plot = (MapTile*)data;
+
+    uint8 terrain = plot->terrain;
+    // map to non-elevated terrain types
+    if (terrain >= tHillsStart)
+        terrain = ((terrain - tLandStart) % (tBaseEnd - tLandStart)) + tLandStart;
+
+    switch (terrain)
+    {
+    case tSNOW:
+        // rgb: #cec4df
+        bgrOut[0] = 0xdf;
+        bgrOut[1] = 0xc4;
+        bgrOut[2] = 0xce;
+        break;
+    case tTUNDRA:
+        // rgb: #8d6c65
+        bgrOut[0] = 0x65;
+        bgrOut[1] = 0x6c;
+        bgrOut[2] = 0x8d;
+        break;
+    case tPLAINS:
+        // rgb: #abaa45
+        bgrOut[0] = 0x45;
+        bgrOut[1] = 0xaa;
+        bgrOut[2] = 0xab;
+        break;
+    case tGRASS:
+        // rgb: #6f8c35
+        bgrOut[0] = 0x35;
+        bgrOut[1] = 0x8c;
+        bgrOut[2] = 0x6f;
+        break;
+    case tDESERT:
+        // rgb: #e9b76e
+        bgrOut[0] = 0x6e;
+        bgrOut[1] = 0xb7;
+        bgrOut[2] = 0xe9;
+        break;
+    case tCOAST:
+        // rgb: #5e6f8d
+        bgrOut[0] = 0x8d;
+        bgrOut[1] = 0x6f;
+        bgrOut[2] = 0x5e;
+        break;
+    default:
+        //printf("Ocean");
+        // rgb: #12142b
+        bgrOut[0] = 0x2b;
+        bgrOut[1] = 0x14;
+        bgrOut[2] = 0x12;
+        break;
+    }
+}
+
 void PaintIDS(void* data, uint8 bgrOut[3])
 {
     float64 val = *(float64*)data;
@@ -531,6 +588,38 @@ StampSet StampViaMapTile(void* data)
     stamp.resource = plot->resource;
 
     return stamp;
+}
+
+uint8 StampRiversViaMapTile(void* data)
+{
+    MapTile* plot = (MapTile*)data;
+
+    uint8 out = 0;
+
+    if (plot->isWOfRiver)
+        out |= EDGE_E;
+    if (plot->isNWOfRiver)
+        out |= EDGE_SE;
+    if (plot->isNEOfRiver)
+        out |= EDGE_SW;
+
+    return out;
+}
+
+uint8 StampCliffsViaMapTile(void* data)
+{
+    MapTile* plot = (MapTile*)data;
+
+    uint8 out = 0;
+
+    if (plot->isWOfCliff)
+        out |= EDGE_W;
+    if (plot->isNWOfCliff)
+        out |= EDGE_NW;
+    if (plot->isNEOfCliff)
+        out |= EDGE_NE;
+
+    return out;
 }
 
 
@@ -2302,7 +2391,7 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
                 lowestJunction->flow = dirs.front();
             else
             {
-                printf("ERROR - Bad assumption made. Lake outflow has %llu valid flows", dirs.size());
+                printf("ERROR - Bad assumption made. Lake outflow has %llu valid flows\n", dirs.size());
             }
             // then update all junctions with outflow
             for (RiverHex* thisLake : lakeList)
@@ -2935,6 +3024,8 @@ void InitRiverJunction(RiverJunction* junc, Coord c, bool isNorth)
     junc->isOutflow = false;
     junc->rawID = UINT32_MAX;
     junc->id = UINT32_MAX;
+
+    new (&junc->parentJunctions) std::vector<RiverJunction*>;
 }
 
 void AddParent(RiverJunction* junc, RiverJunction* parent)
@@ -3048,9 +3139,9 @@ void GenerateMap()
     gThrs.coast = map.seaThreshold;
     //DrawHexes(map.base.data, sizeof *map.base.data, PaintElevationMap);
     //DrawHexes(plotTypes, sizeof *plotTypes, PaintPlotTypes);
-    DrawHexes(map.base.data, sizeof *map.base.data, PaintUnitFloatGradient);
-    SaveMap("map.bmp");
-    SaveToCiv6Map("ItsAMap", &details, gMap);
+    //DrawHexes(map.base.data, sizeof *map.base.data, PaintUnitFloatGradient);
+    //SaveMap("map.bmp");
+    //SaveToCiv6Map("ItsAMap", &details, gMap);
 
     if (iter == 10)
     {
@@ -3089,6 +3180,12 @@ void GenerateMap()
 
     AddLakes(&riverMap);
     AddRivers(&riverMap);
+
+    DrawHexes(gMap, sizeof *gMap, PaintMapTiles);
+    AddStamps(gMap, sizeof *gMap, StampViaMapTile);
+    AddEdges(gMap, sizeof *gMap, StampRiversViaMapTile, stampBlue);
+    SaveMap("24_MapWRivers.bmp");
+    SaveToCiv6Map("ItsAMap", &details, gMap);
 
     // TODO: ? maybe not
     //AreaBuilder.Recalculate()
@@ -4306,18 +4403,17 @@ void AddRivers(RiverMap * map)
                         if (data.WOfRiver != tfdNO_FLOW)
                         {
                             plot->isWOfRiver = 1;
-                            // TODO: flow dir
-                            // my guess is this is only locked in if there is an adjacent tile
+                            plot->flowDirE = data.WOfRiver;
                         }
                         if (data.NWOfRiver != tfdNO_FLOW)
                         {
                             plot->isNWOfRiver = 1;
-                            // TODO: flow dir
+                            plot->flowDirSE = data.NWOfRiver;
                         }
                         if (data.NEOfRiver != tfdNO_FLOW)
                         {
                             plot->isNEOfRiver = 1;
-                            // TODO: flow dir
+                            plot->flowDirSW = data.NEOfRiver;
                         }
                     }
                 }
