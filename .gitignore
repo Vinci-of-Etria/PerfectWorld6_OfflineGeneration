@@ -349,6 +349,9 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+# Misc
+enc_temp_folder/
+
 # Civ6 files
 # These all exist in the game or PerfectWorld6 mod folder, I want them in 
 # the project for my ease of reference, but I don't want to upload others'

@@ -339,7 +339,7 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // ocean
     if (val <= gThrs.ocean)
     {
-        printf("Ocean");
+        printf("Ocean\n");
         // rgb: #12142b
         bgrOut[0] = 0x2b;
         bgrOut[1] = 0x14;
@@ -348,7 +348,7 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // coast
     else if (val < gThrs.coast)
     {
-        printf("Coast");
+        printf("Coast\n");
         // rgb: #5e6f8d
         bgrOut[0] = 0x8d;
         bgrOut[1] = 0x6f;
@@ -357,7 +357,7 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // land
     else if (val < gThrs.hills)
     {
-        printf("Land");
+        printf("Land\n");
         // rgb: #6f943d
         bgrOut[0] = 0x3d;
         bgrOut[1] = 0x94;
@@ -366,7 +366,7 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // hills
     else if (val < gThrs.mountains)
     {
-        printf("Hills");
+        printf("Hills\n");
         // rgb: #a68672
         bgrOut[0] = 0x72;
         bgrOut[1] = 0x86;
@@ -375,7 +375,7 @@ void PaintElevationMap(void* data, uint8 bgrOut[3])
     // mountain
     else
     {
-        printf("Mountain");
+        printf("Mountain\n");
         // rgb: #6e5e57
         bgrOut[0] = 0x57;
         bgrOut[1] = 0x5e;
@@ -402,35 +402,35 @@ void PaintPlotTypes(void* data, uint8 bgrOut[3])
     switch (val)
     {
     case ptOcean:
-        //printf("Ocean");
+        //printf("Ocean\n");
         // rgb: #12142b
         bgrOut[0] = 0x2b;
         bgrOut[1] = 0x14;
         bgrOut[2] = 0x12;
         break;
     case ptLand:
-        //printf("Land");
+        //printf("Land\n");
         // rgb: #6f943d
         bgrOut[0] = 0x3d;
         bgrOut[1] = 0x94;
         bgrOut[2] = 0x6f;
         break;
     case ptHills:
-        //printf("Hills");
+        //printf("Hills\n");
         // rgb: #a68672
         bgrOut[0] = 0x72;
         bgrOut[1] = 0x86;
         bgrOut[2] = 0xa6;
         break;
     case ptMountain:
-        //printf("Mountain");
+        //printf("Mountain\n");
         // rgb: #6e5e57
         bgrOut[0] = 0x57;
         bgrOut[1] = 0x5e;
         bgrOut[2] = 0x6e;
         break;
     default:
-        printf("Miss");
+        printf("Miss\n");
         break;
     }
 }
@@ -478,7 +478,7 @@ void PaintTerrainTypes(void* data, uint8 bgrOut[3])
         bgrOut[2] = 0x5e;
         break;
     default:
-        //printf("Ocean");
+        //printf("Ocean\n");
         // rgb: #12142b
         bgrOut[0] = 0x2b;
         bgrOut[1] = 0x14;
@@ -535,7 +535,7 @@ void PaintMapTiles(void* data, uint8 bgrOut[3])
         bgrOut[2] = 0x5e;
         break;
     default:
-        //printf("Ocean");
+        //printf("Ocean\n");
         // rgb: #12142b
         bgrOut[0] = 0x2b;
         bgrOut[1] = 0x14;
@@ -885,14 +885,14 @@ void LoadDefaultSettings(char const* settingsFile)
         fclose(fd);
     }
     else
-        printf("No settings file, just loading defaults.");
+        printf("No settings file, just loading defaults.\n");
 
     // Amend conflicting settings
 
     // can't wrap y in edges won't align
     if (gSet.wrapY && gSet.height % 2)
     {
-        printf("WARNING: Can't wrap y if the height is odd due to grip alignment! Disabling Y wrap.");
+        printf("WARNING: Can't wrap y if the height is odd due to grip alignment! Disabling Y wrap.\n");
         gSet.wrapY = false;
     }
 }
@@ -2268,12 +2268,12 @@ void SiltifyLakes(RiverMap* map)
     --lakeIns;
 
     uint32 iter = 0;
-    for (; lakeIns >= lakeList; --lakeIns)
+    for (; lakeIns >= lakeList;)
     {
         ++iter;
         if (iter > 100000000)
         {
-            printf("ERROR - Endless loop in lake siltification.");
+            printf("ERROR - Endless loop in lake siltification.\n");
             break;
         }
 
@@ -2320,6 +2320,8 @@ void SiltifyLakes(RiverMap* map)
     free(onQueueMapSouth);
     free(onQueueMapNorth);
     free(lakeList);
+
+    printf("Siltified Lakes over %d iterations. - Brought to you by Bobert13\n", iter);
 }
 
 void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
@@ -2369,10 +2371,12 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
             ldu.currentLakeSize = 0;
             uint32 lakeSize = GetRandomLakeSize(map);
             GrowLake(map, hex, lakeSize, &ldu, lakeList, growthQueue);
-            while (!growthQueue.empty())
+            uint32 gqInd = 0;
+            while (gqInd != growthQueue.size())
             {
-                RiverHex* nextLake = growthQueue.back();
-                growthQueue.pop_back();
+                // lazy fifo
+                RiverHex* nextLake = growthQueue[gqInd];
+                ++gqInd;
                 GrowLake(map, nextLake, lakeSize, &ldu, lakeList, growthQueue);
             }
             // process junctions for all lake tiles
@@ -2545,6 +2549,7 @@ void SetFlowDestinations(RiverMap* map)
     RiverJunction** end = it + size;
 
     std::sort(it, end, [](RiverJunction* a, RiverJunction* b) { return a->altitude > b->altitude; });
+    printf("junctionList length %d\n", size);
 
     uint32 validFlowCount = 0;
 
@@ -2569,6 +2574,8 @@ void SetFlowDestinations(RiverMap* map)
     }
 
     free(junctionList);
+
+    printf("validFlowCount = %d\n", validFlowCount);
 }
 
 std::vector<FlowDir> GetValidFlows(RiverMap* map, RiverJunction* junc)
@@ -2681,6 +2688,7 @@ void SetRiverSizes(RiverMap* map, float64 * locRainfallMap)
 
     uint32 riverIndex = (uint32)(floor(gSet.riverPercent * size));
     map->riverThreshold = junctionList[riverIndex]->size;
+    printf("river threshold = %f\n", map->riverThreshold);
 
     free(junctionList);
 }
@@ -2759,6 +2767,8 @@ void CreateRiverList(RiverMap* map)
             ++currentRawID;
         }
     }
+
+    printf("number of river sources found = %d\n", (int32)(rIns - map->rivers));
 
     // idea: if rivers grow at one length per loop, you can allow late comers to overwrite
     // their predecessors, as they will always be the longer river. Just make sure to clarify
@@ -2858,6 +2868,15 @@ void AssignRiverIDs(RiverMap* map)
         it->riverID = currentRiverID;
         for (RiverJunction* junc : it->junctions)
             junc->id = currentRiverID;
+    }
+
+    for (it = map->rivers; it < end; ++it)
+    {
+        if (it->riverID != UINT32_MAX)
+        {
+            RiverJunction* mouth = it->junctions.back();
+            printf("river ID %d length=%d with mouth at %d, %d, isNorth = %d\n", it->riverID, (int32)it->junctions.size(), mouth->coord.x, mouth->coord.y, mouth->isNorth);
+        }
     }
 }
 
@@ -3039,7 +3058,7 @@ void AddParent(RiverJunction* junc, RiverJunction* parent)
 void PrintRiverJunction(RiverJunction* junc)
 {
     char const* flowStr[] = { "NONE", "WEST", "EAST", "VERT"};
-    printf("junction at %d, %d isNorth=%d, flow=%s, size=%f, submerged=%d, outflow=%llx, isOutflow=%d riverID = %d",
+    printf("junction at %d, %d isNorth=%d, flow=%s, size=%f, submerged=%d, outflow=%llx, isOutflow=%d riverID = %d\n",
         junc->coord.x, junc->coord.y, junc->isNorth, flowStr[junc->flow], junc->size, junc->submerged, (uint64)junc->outflow, junc->isOutflow, junc->id);
 }
 
@@ -3145,7 +3164,7 @@ void GenerateMap()
 
     if (iter == 10)
     {
-        printf("Failed to break up Pangea!");
+        printf("Failed to break up Pangea!\n");
         return;
     }
 
@@ -4642,7 +4661,6 @@ uint8* ttMatch;
 
 bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
 {
-    bool meteorThrown = false;
     bool pangeaDetected = false;
 
     ttMatch = pb->terrainTypes;
@@ -4651,6 +4669,8 @@ bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
     SaveMap("areas00.bmp");
 
     uint32 meteorCount = 0;
+    printf("mc.AllowPangeas = %d\n", gSet.allowPangeas);
+    printf("mc.maximumMeteorCount = %d\n", maximumMeteorCount);
 
     if (!gSet.allowPangeas)
         while (IsPangea(pb) && meteorCount < maximumMeteorCount)
@@ -4658,8 +4678,8 @@ bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
             pangeaDetected = true;
             Coord c = GetMeteorStrike(pb);
             CastMeteorUponTheEarth(pb, c, plotTypes, terrainTypes);
+            printf("A meteor has struck the Earth at %d, %d!\n", c.x, c.y);
 
-            meteorThrown = true;
             ++meteorCount;
 
             DefineAreas(&pb->areaMap, [](uint32 i) { return ttMatch[i] == tOCEAN; }, false);
@@ -4671,16 +4691,29 @@ bool BreakPangaeas(PangaeaBreaker* pb, uint8* plotTypes, uint8* terrainTypes)
         }
 
     if (meteorCount == maximumMeteorCount)
+    {
+        printf("Maximum meteor count of %d has been reached. Pangaea may still exist.\n", meteorCount);
         return false;
+    }
+
+    if (meteorCount)
+        printf("The age of dinosours has come to a cataclysmic end.\n");
 
     if (gSet.allowPangeas)
+    {
+        printf("Pangeas are allowed on this map and will not be suppressed.\n");
         pb->oldWorldPercent = 1.0;
+    }
+    else if (pangeaDetected)
+        printf("No pangea detected on this map.\n");
 
     return true;
 }
 
 bool IsPangea(PangaeaBreaker* pb)
 {
+    printf("testing pangaea\n");
+
     std::vector<PWArea*> continentList;
 
     PWArea* area = pb->areaMap.areaList;
@@ -4695,11 +4728,15 @@ bool IsPangea(PangaeaBreaker* pb)
     for (PWArea* area : continentList)
         totalLand += area->size;
 
+    printf("totalLand = %d\n", totalLand);
+
     // sort all the continents by size, largest first
     std::sort(continentList.begin(), continentList.end(), [](PWArea* a, PWArea* b) { return a->size > b->size; });
 
     uint32 biggest = continentList.front()->size;
     pb->oldWorldPercent = biggest / (float64)totalLand;
+    printf("biggest continent = %d\n", biggest);
+    printf("percent of biggest = %f\n", pb->oldWorldPercent);
 
     return gSet.pangaeaSize < pb->oldWorldPercent;
 }
@@ -4727,6 +4764,8 @@ void CastMeteorUponTheEarth(PangaeaBreaker* pb, Coord c, uint8* plotTypes, uint8
     Dim dim = pb->map->base.dim;
     uint32 radius = PWRandInt(minimumMeteorSize + 1, (uint32)floor(dim.w / 16.0f));
     std::vector<uint32> ringList = GetRingAroundCell(dim, c, radius);
+
+    printf("meteor damage radius = %d at %d, %d\n", radius, c.x, c.y);
 
     // destroy center
     uint32 i = GetIndex(&pb->map->base, c);
@@ -4763,6 +4802,8 @@ Coord GetHighestCentrality(PangaeaBreaker* pb, uint32 id)
 {
     std::vector<CentralityScore> cs = CreateCentralityList(pb, id);
     std::sort(cs.begin(), cs.end(), [](CentralityScore& a, CentralityScore& b) { return a.centrality > b.centrality; });
+    printf("length of C is %d\n", (int32)cs.size());
+    printf("highest centrality is %d\n", cs.front().centrality);
     return cs.front().c;
 }
 
@@ -4773,6 +4814,8 @@ std::vector<CentralityScore> CreateContinentList(PangaeaBreaker* pb, uint32 id)
     std::vector<CentralityScore> cs;
     std::vector<uint32> indexMap;
     uint32 cnt = 0;
+
+    printf("biggest ID = %d\n", id);
 
     float64* aID = pb->areaMap.base.data;
     Coord c;
@@ -4803,6 +4846,8 @@ std::vector<CentralityScore> CreateContinentList(PangaeaBreaker* pb, uint32 id)
 std::vector<CentralityScore> CreateCentralityList(PangaeaBreaker* pb, uint32 id)
 {
     std::vector<CentralityScore> cs = CreateContinentList(pb, id);
+
+    printf("length of C after createContinentList is %d\n", (int32)cs.size());
 
     std::vector<uint32> delta;
     std::vector<uint32> sigma;
@@ -4891,11 +4936,13 @@ void CreateNewWorldMap(PangaeaBreaker* pb)
     std::sort(continentList.begin(), continentList.end(), [](PWArea* a, PWArea* b) { return a->size > b->size; });
 
     uint32 biggest = continentList.front()->size;
+    printf("biggest continent = %d\n", biggest);
 
     uint32 totalLand = 0;
 
     for (PWArea* area : continentList)
         totalLand += area->size;
+    printf("totalLand = %d\n", totalLand);
 
     std::vector<uint32> newWorldList;
     newWorldList.push_back(continentList[1]->ind);
@@ -4916,6 +4963,8 @@ void CreateNewWorldMap(PangaeaBreaker* pb)
         newWorldSize += c->size;
     }
 
+    printf("new world percent = %f\n", newWorldSize / (float64)totalLand);
+
     // first assume old world
     memset(pb->newWorldMap, 0, pb->map->base.length * sizeof *pb->newWorldMap);
 
@@ -4925,6 +4974,7 @@ void CreateNewWorldMap(PangaeaBreaker* pb)
         bool* it = pb->newWorldMap;
         bool* end = it + pb->map->base.length;
         area = pb->areaMap.areaList;;
+        printf("New World Continent with size %d\n", GetAreaByID(&pb->areaMap, id)->size);
         for (; it < end; ++it, ++area)
             if (area->ind == id)
                 *it = true;
@@ -5088,7 +5138,7 @@ std::vector<uint32> FilterBadStarts(AssignStartingPlots* asp, PangaeaBreaker* pb
     }
 
     if (!betterStarts.empty())
-        printf("No better starts");
+        printf("No better starts\n");
 
     return betterStarts;
 }
