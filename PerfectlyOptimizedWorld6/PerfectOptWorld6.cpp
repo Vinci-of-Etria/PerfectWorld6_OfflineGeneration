@@ -622,6 +622,35 @@ uint8 StampCliffsViaMapTile(void* data)
     return out;
 }
 
+uint8 StampVertTest(void* data, uint8 rgbOut[3 * 2])
+{
+    rgbOut[0] = 0xFF;
+    rgbOut[1] = 0x00;
+    rgbOut[2] = 0x00;
+    rgbOut[3] = 0xFF;
+    rgbOut[4] = 0x00;
+    rgbOut[5] = 0x00;
+
+    return VERT_N | VERT_S;
+}
+
+uint8 StampFlow(void* data, uint8 rgbOut[3 * 2])
+{
+    RiverHex* hex = (RiverHex*)data;
+
+    uint8 out = 0;
+
+    out |= VERT_N;
+    rgbOut[0] = 0xFF * hex->northJunction.altitude;
+    rgbOut[1] = 0x00; //0xFF * (1 - hex->northJunction.altitude);
+    rgbOut[2] = 0x00;
+    out |= VERT_S;
+    rgbOut[3] = 0xFF * hex->southJunction.altitude;
+    rgbOut[4] = 0x00; //0xFF * (1 - hex->southJunction.altitude);
+    rgbOut[5] = 0x00;
+
+    return out;
+}
 
 // --- Base Game Source Functions ---------------------------------------------
 
@@ -1789,11 +1818,14 @@ void DefineAreas(PWAreaMap* map, MatchI mFunc, bool bDebug)
     for (c.y = 0; c.y < map->base.dim.h; ++c.y)
         for (c.x = 0; c.x < map->base.dim.w; ++c.x, ++it, ++i)
         {
-            ++currentAreaID;
-            InitPWArea(it, currentAreaID, c, mFunc(i));
-            it->debug = bDebug;
+            if (map->base.data[i] == 0.0)
+            {
+                ++currentAreaID;
+                InitPWArea(it, currentAreaID, c, mFunc(i));
+                it->debug = bDebug;
 
-            FillArea(map, c, it, mFunc);
+                FillArea(map, c, it, mFunc);
+            }
         }
 }
 
@@ -2339,6 +2371,9 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
     RiverHex* rivIt = map->riverData;
     float64* rainIt = rainfallMap;
 
+    AddVerts(map->riverData, sizeof * map->riverData, StampFlow);
+    SaveMap("24_MapFlow.bmp");
+
     for (; it < end; ++it, ++rivIt, ++rainIt)
     {
         if (*it > map->eMap->seaThreshold)
@@ -2352,7 +2387,7 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
     std::sort(riverHexList, riverHexIns, [](RiverHex* a, RiverHex* b) { return a->rainfall > b->rainfall; });
 
     uint32 rListSize = (uint32)(riverHexIns - riverHexList);
-    uint32 portion = rListSize / 4u; // dividing ints automatically floors
+    uint32 portion = rListSize / 4u + 1; // dividing ints automatically floors
     riverHexIns -= portion;
 
     std::random_shuffle(riverHexList, riverHexIns);
@@ -2379,7 +2414,9 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
                 ++gqInd;
                 GrowLake(map, nextLake, lakeSize, &ldu, lakeList, growthQueue);
             }
-            // process junctions for all lake tiles
+            if (ldu.lakesAdded == 10)
+                bool bh = true;
+            // process junctions for all lake% tiles
             // first find lowest junction
             RiverJunction* lowestJunction = &lakeList.front()->northJunction;
             for (RiverHex* thisLake : lakeList)
@@ -2497,7 +2534,7 @@ bool ValidLakeHex(RiverMap* map, RiverHex* lakeHex, LakeDataUtil* ldu)
 
         if (map->eMap->base.data[i] < map->eMap->seaThreshold)
             return false;
-        else if (nHex->lakeID != UINT32_MAX && nHex->lakeID != ldu->currentLakeSize)
+        else if (nHex->lakeID != UINT32_MAX && nHex->lakeID != ldu->currentLakeID)
             return false;
     }
 
@@ -3187,6 +3224,9 @@ void GenerateMap()
     //    AddTerrainFromContinents(terrainTypes, g_iW, g_iH, iContinentBoundaryPlots);
     //end
 
+    DrawHexes(gMap, sizeof * gMap, PaintMapTiles);
+    AddStamps(gMap, sizeof * gMap, StampViaMapTile);
+
     RiverMap riverMap;
     InitRiverMap(&riverMap, &map);
     SetJunctionAltitudes(&riverMap);
@@ -3203,7 +3243,8 @@ void GenerateMap()
     DrawHexes(gMap, sizeof *gMap, PaintMapTiles);
     AddStamps(gMap, sizeof *gMap, StampViaMapTile);
     AddEdges(gMap, sizeof *gMap, StampRiversViaMapTile, stampBlue);
-    SaveMap("24_MapWRivers.bmp");
+    AddVerts(gMap, sizeof *gMap, StampVertTest);
+    SaveMap("25_MapWRivers.bmp");
     SaveToCiv6Map("ItsAMap", &details, gMap);
 
     // TODO: ? maybe not
@@ -4938,7 +4979,7 @@ void CreateNewWorldMap(PangaeaBreaker* pb)
     uint32 biggest = continentList.front()->size;
     printf("biggest continent = %d\n", biggest);
 
-    uint32 totalLand = 0;
+    float64 totalLand = 0;
 
     for (PWArea* area : continentList)
         totalLand += area->size;
@@ -4963,7 +5004,7 @@ void CreateNewWorldMap(PangaeaBreaker* pb)
         newWorldSize += c->size;
     }
 
-    printf("new world percent = %f\n", newWorldSize / (float64)totalLand);
+    printf("new world percent = %f\n", newWorldSize / totalLand);
 
     // first assume old world
     memset(pb->newWorldMap, 0, pb->map->base.length * sizeof *pb->newWorldMap);

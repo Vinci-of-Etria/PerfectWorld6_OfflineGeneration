@@ -27,7 +27,7 @@ static uint32 const hexOffsets[] =
 
 // Features
 
-static uint8 const hillStamp[] =
+static int8 const hillStamp[] =
 {
     // y offset, rows
     4, 3,
@@ -37,7 +37,7 @@ static uint8 const hillStamp[] =
     2, 6, 7,
 };
 
-static uint8 const mtnStamp[] =
+static int8 const mtnStamp[] =
 {
     // y offset, rows
     6, 11,
@@ -55,7 +55,7 @@ static uint8 const mtnStamp[] =
     1, 10,
 };
 
-static uint8 const volcanoStamp[] =
+static int8 const volcanoStamp[] =
 {
     // y offset, rows
     5, 13,
@@ -75,7 +75,7 @@ static uint8 const volcanoStamp[] =
     1, 9,
 };
 
-static uint8 const iceStamp[] =
+static int8 const iceStamp[] =
 {
     // y offset, rows
     2, 13,
@@ -95,7 +95,7 @@ static uint8 const iceStamp[] =
     1, 9,
 };
 
-static uint8 const oasisStamp[] =
+static int8 const oasisStamp[] =
 {
     // y offset, rows
     3, 4,
@@ -106,7 +106,7 @@ static uint8 const oasisStamp[] =
     12, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14,
 };
 
-static uint8 const reefStamp[] =
+static int8 const reefStamp[] =
 {
     // y offset, rows
     2, 6,
@@ -119,7 +119,7 @@ static uint8 const reefStamp[] =
     1, 7,
 };
 
-static uint8 const forestStamp[] =
+static int8 const forestStamp[] =
 {
     // y offset, rows
     7, 9,
@@ -135,7 +135,7 @@ static uint8 const forestStamp[] =
     1, 13,
 };
 
-static uint8 const jungleStamp[] =
+static int8 const jungleStamp[] =
 {
     // y offset, rows
     7, 8,
@@ -150,7 +150,7 @@ static uint8 const jungleStamp[] =
     4, 10, 11, 14, 15,
 };
 
-static uint8 const marshStamp[] =
+static int8 const marshStamp[] =
 {
     // y offset, rows
     9, 5,
@@ -162,7 +162,7 @@ static uint8 const marshStamp[] =
     1, 13,
 };
 
-static uint8 const floodplainStamp[] =
+static int8 const floodplainStamp[] =
 {
     // y offset, rows
     8, 7,
@@ -176,7 +176,7 @@ static uint8 const floodplainStamp[] =
     4, 12, 13, 14, 15,
 };
 
-static uint8 const volcanicSoilStamp[] =
+static int8 const volcanicSoilStamp[] =
 {
     // y offset, rows
     10, 3,
@@ -186,7 +186,7 @@ static uint8 const volcanicSoilStamp[] =
     2, 12, 13,
 };
 
-static uint8 const geothermalStamp[] =
+static int8 const geothermalStamp[] =
 {
     // y offset, rows
     8, 5,
@@ -198,7 +198,7 @@ static uint8 const geothermalStamp[] =
     3, 13, 14, 15,
 };
 
-static uint8 const naturalWonderStamp[] =
+static int8 const naturalWonderStamp[] =
 {
     // y offset, rows
     8, 7,
@@ -214,7 +214,7 @@ static uint8 const naturalWonderStamp[] =
 
 // Resources
 
-static uint8 const bonusStamp[] =
+static int8 const bonusStamp[] =
 {
     // y offset, rows
     9, 6,
@@ -227,7 +227,7 @@ static uint8 const bonusStamp[] =
     2, 4, 5,
 };
 
-static uint8 const luxuryStamp[] =
+static int8 const luxuryStamp[] =
 {
     // y offset, rows
     9, 6,
@@ -240,7 +240,7 @@ static uint8 const luxuryStamp[] =
     2, 3, 5,
 };
 
-static uint8 const strategicStamp[] =
+static int8 const strategicStamp[] =
 {
     // y offset, rows
     9, 6,
@@ -251,94 +251,6 @@ static uint8 const strategicStamp[] =
     2, 4, 5,
     2, 3, 6,
     2, 2, 7,
-};
-
-// Rivers
-
-static uint8 const eEdgeStamp[] =
-{
-    // y offset, rows
-    5, 10,
-
-    1, 17,
-    1, 17,
-    1, 17,
-    1, 17,
-    1, 17,
-    1, 17,
-    1, 17,
-    1, 17,
-    1, 17,
-    1, 17,
-};
-
-static uint8 const seEdgeStamp[] =
-{
-    // y offset, rows
-    0, 6,
-
-    1, 9,
-    2, 10, 11,
-    2, 12, 13,
-    1, 14,
-    2, 15, 16,
-    1, 17,
-};
-
-static uint8 const swEdgeStamp[] =
-{
-    // y offset, rows
-    0, 6,
-
-    1, 8,
-    2, 6, 7,
-    2, 4, 5,
-    1, 3,
-    2, 1, 2,
-    1, 0,
-};
-
-static uint8 const wEdgeStamp[] =
-{
-    // y offset, rows
-    5, 10,
-
-    1, 0,
-    1, 0,
-    1, 0,
-    1, 0,
-    1, 0,
-    1, 0,
-    1, 0,
-    1, 0,
-    1, 0,
-    1, 0,
-};
-
-static uint8 const nwEdgeStamp[] =
-{
-    // y offset, rows
-    14, 6,
-
-    1, 0,
-    2, 1, 2,
-    1, 3,
-    2, 4, 5,
-    2, 6, 7,
-    1, 8,
-};
-
-static uint8 const neEdgeStamp[] =
-{
-    // y offset, rows
-    14, 6,
-
-    1, 17,
-    2, 15, 16,
-    1, 14,
-    2, 12, 13,
-    2, 10, 11,
-    1, 9,
 };
 
 enum ElevationStamp
@@ -355,6 +267,96 @@ struct StampSet
     uint8 resource;
 };
 
+
+// Edges
+
+static int8 const eEdgeStamp[] =
+{
+    // y offset, rows
+    5, 10,
+
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+    1, 17,
+};
+
+static int8 const seEdgeStamp[] =
+{
+    // y offset, rows
+    0, 6,
+
+    1, 9,
+    2, 10, 11,
+    2, 12, 13,
+    1, 14,
+    2, 15, 16,
+    1, 17,
+};
+
+static int8 const swEdgeStamp[] =
+{
+    // y offset, rows
+    0, 6,
+
+    1, 8,
+    2, 6, 7,
+    2, 4, 5,
+    1, 3,
+    2, 1, 2,
+    1, 0,
+};
+
+static int8 const wEdgeStamp[] =
+{
+    // y offset, rows
+    5, 10,
+
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+    1, 0,
+};
+
+static int8 const nwEdgeStamp[] =
+{
+    // y offset, rows
+    14, 6,
+
+    1, 0,
+    2, 1, 2,
+    1, 3,
+    2, 4, 5,
+    2, 6, 7,
+    1, 8,
+};
+
+static int8 const neEdgeStamp[] =
+{
+    // y offset, rows
+    14, 6,
+
+    1, 17,
+    2, 15, 16,
+    1, 14,
+    2, 12, 13,
+    2, 10, 11,
+    1, 9,
+};
+
+
 #define EDGE_E  (1 << 0)
 #define EDGE_SE (1 << 1)
 #define EDGE_SW (1 << 2)
@@ -362,13 +364,138 @@ struct StampSet
 #define EDGE_NW (1 << 4)
 #define EDGE_NE (1 << 5)
 
+
+// Verts
+
+#if 1
+static int8 const nVertStamp[] =
+{
+    // y offset, rows
+    18, 4,
+
+    2, 8, 9,
+    4, 7, 8, 9, 10,
+    4, 7, 8, 9, 10,
+    2, 8, 9,
+};
+
+static int8 const sVertStamp[] =
+{
+    // y offset, rows
+    -2, 4,
+
+    2, 8, 9,
+    4, 7, 8, 9, 10,
+    4, 7, 8, 9, 10,
+    2, 8, 9,
+};
+#else
+static int8 const nVertStamp[] =
+{
+    // y offset, rows
+    19, 2,
+
+    2, 8, 9,
+    2, 8, 9,
+};
+
+static int8 const sVertStamp[] =
+{
+    // y offset, rows
+    -1, 2,
+
+    2, 8, 9,
+    2, 8, 9,
+};
+#endif
+
+
+static int8 const nTopVertStamp[] =
+{
+    // y offset, rows
+    18, 2,
+
+    2, 8, 9,
+    4, 7, 8, 9, 10,
+};
+
+static int8 const sBotVertStamp[] =
+{
+    // y offset, rows
+    0, 2,
+
+    4, 7, 8, 9, 10,
+    2, 8, 9,
+};
+
+static int8 const swLeftVertStamp[] =
+{
+    // y offset, rows
+    3, 4,
+
+    1, 0,
+    2, 0, 1,
+    2, 0, 1,
+    1, 0,
+};
+
+static int8 const nwLeftVertStamp[] =
+{
+    // y offset, rows
+    13, 4,
+
+    1, 0,
+    2, 0, 1,
+    2, 0, 1,
+    1, 0,
+};
+
+static int8 const neRightVertStamp[] =
+{
+    // y offset, rows
+    13, 4,
+
+    1, 17,
+    2, 16, 17,
+    2, 16, 17,
+    1, 17,
+};
+
+static int8 const seRightVertStamp[] =
+{
+    // y offset, rows
+    3, 4,
+
+    1, 17,
+    2, 16, 17,
+    2, 16, 17,
+    1, 17,
+};
+
+
+#define VERT_IND_N  (0)
+#define VERT_IND_S  (1)
+
+#define VERT_N  (1 << VERT_IND_N )
+#define VERT_S  (1 << VERT_IND_S )
+
+
+// Colors
+
 static uint8 const stampBlack[3]  = { 0x00, 0x00, 0x00 };
 static uint8 const stampBlue[3]   = { 0x00, 0xD1, 0xFF };
 static uint8 const stampOrange[3] = { 0xFF, 0xA1, 0x00 };
 
+
+// Typedefs
+
 typedef void(*FilterToBGRFn)(void*, uint8[3]);
 typedef StampSet(*FilterStampsFn)(void*);
 typedef uint8(*FilterEdgeFn)(void*);
+typedef uint8(*FilterVertFn)(void*, uint8[3*2]); // uint8
+
+
+// Interface
 
 void InitImageWriter(uint32 width, uint32 height,
     bool _wrapX, bool _wrapY, uint32 const* hexDef);
@@ -377,5 +504,6 @@ void ExitImageWriter();
 void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn);
 void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn);
 void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8 const color[3]);
+void AddVerts(void* data, uint32 dataTypeByteWidth, FilterVertFn FilterFn);
 
 void SaveMap(char const* filename);

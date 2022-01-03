@@ -123,6 +123,9 @@ uint32 len;
 uint8* buffer;
 uint32 bgrByteWidth;
 uint32 bgrByteLen;
+// x6 of bgrByteLen for stuff operating on hex quad ranges
+uint8* bufferExtended;
+uint32 bgrByteLenExtended;
 // hex properties
 uint32 hexWidth;
 uint32 hexHeight;
@@ -175,9 +178,10 @@ void InitImageWriter(uint32 _width, uint32 _height, bool _wrapX, bool _wrapY, ui
 
     bgrByteWidth = PIXEL_SIZE * width;
     bgrByteLen = PIXEL_SIZE * len;
+    bgrByteLenExtended = bgrByteLen * 2;
 
     buffer = (uint8*)malloc(bgrByteLen);
-
+    bufferExtended = (uint8*)malloc(bgrByteLenExtended);
 
     // hex properties
 
@@ -213,7 +217,7 @@ void InitImageWriter(uint32 _width, uint32 _height, bool _wrapX, bool _wrapY, ui
     byteLen = PIXEL_SIZE * pixLen;
 
     imgBuf = (uint8*)malloc(byteLen);
-    if (!buffer || !imgBuf)
+    if (!buffer || !bufferExtended || !imgBuf)
     {
         printf("Ran out of memory initializing image writer!\n");
         assert(0);
@@ -234,8 +238,10 @@ void InitImageWriter(uint32 _width, uint32 _height, bool _wrapX, bool _wrapY, ui
 void ExitImageWriter()
 {
     free(imgBuf);
+    free(bufferExtended);
     free(buffer);
 }
+
 
 void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn)
 {
@@ -462,27 +468,31 @@ void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn)
     assert(diff == byteLen);
 }
 
-static void ApplyStamp(uint8* pos, uint8 const* stamp, uint8 const rgb[3])
+static void ApplyStamp(uint8* pos, int8 const* stamp, uint8 const rgb[3])
 {
-    uint8 yOffset = stamp[0];
-    uint8 rows = stamp[1];
-    uint8 const* it = stamp + 2;
+    int8 yOffset = stamp[0];
+    int8 rows = stamp[1];
+    int8 const* it = stamp + 2;
 
     uint8* row = pos + (byteWidth * yOffset);
 
     for (uint8 r = 0; r < rows; ++r, row += byteWidth)
     {
-        uint8 pixelNum = *it;
+        int8 pixelNum = *it;
         ++it;
-        uint8 const* pixEnd = it + pixelNum;
+        int8 const* pixEnd = it + pixelNum;
 
         for (; it < pixEnd; ++it)
         {
+            uint32 diff = it - stamp;
             uint32 offset = *it * PIXEL_SIZE;
 
-            row[offset + 0] = rgb[2];
-            row[offset + 1] = rgb[1];
-            row[offset + 2] = rgb[0];
+            // dumb as hell fix because compiler things I'm accessing out of
+            //   bounds when yOffset is negative
+            int32 access = row - imgBuf;
+            (imgBuf + access)[offset + 0] = rgb[2];
+            (imgBuf + access)[offset + 1] = rgb[1];
+            (imgBuf + access)[offset + 2] = rgb[0];
         }
     }
 }
@@ -797,6 +807,170 @@ void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8
         }
 
         rowRef += rowJump;
+    }
+}
+
+void AddVerts(void* data, uint32 dataTypeByteWidth, FilterVertFn FilterFn)
+{
+    if (!data || !FilterFn)
+    {
+        printf("No data to write - data: %s - fn: %s\n",
+            data ? "exists" : "DNE", FilterFn ? "exists" : "DNE");
+        return;
+    }
+
+
+    // pre-convert pixels
+    uint8* it = buffer;
+    uint8* end = it + len;
+    uint8* src = (uint8*)data;
+    uint8* color = bufferExtended;
+    uint32 set = sizeof uint8 * 3 * 2;
+
+    for (; it < end; ++it, color += set, src += dataTypeByteWidth)
+        *it = FilterFn(src, color);
+
+
+    // add stamps
+
+    uint8* hexRef = buffer;
+    uint8* colorRef = bufferExtended;
+    uint8* rowRef = imgBuf;
+    uint32 rowJump = byteWidth * hexBodyCapHeight;
+    uint32 dblWidth = 2 * dataTypeByteWidth;
+
+    // Handle first row
+
+    uint8* pos = rowRef;
+
+    // handle non wrap
+    for (uint32 x = 0; x < width; ++x, pos += byteHexWidth, ++hexRef, colorRef += set)
+    {
+        // handle each corner
+        if (*hexRef & VERT_N)
+            ApplyStamp(pos, nVertStamp, colorRef + (3 * VERT_IND_N));
+        if (*hexRef & VERT_S)
+            ApplyStamp(pos, sBotVertStamp, colorRef + (3 * VERT_IND_S));
+    }
+
+    rowRef += rowJump;
+
+    // Handle body
+
+    uint32 sHeight = height - 1;
+
+    for (uint32 y = 1; y < sHeight; ++y)
+    {
+        pos = rowRef;
+        if (y % 2)
+            pos += byteHexHalfWidth;
+        uint32 diff = pos - imgBuf;
+
+        for (uint32 x = 0; x < width; ++x, pos += byteHexWidth, ++hexRef, colorRef += set)
+        {
+            // handle each corner
+            if (*hexRef & VERT_N)
+                ApplyStamp(pos, nVertStamp,  colorRef + (3 * VERT_IND_N));
+            if (*hexRef & VERT_S)
+                ApplyStamp(pos, sVertStamp,  colorRef + (3 * VERT_IND_S));
+        }
+
+        rowRef += rowJump;
+    }
+
+    // Handle last row
+    pos = rowRef + byteHexHalfWidth;
+
+    // handle non wrap
+    for (uint32 x = 0; x < width; ++x, pos += byteHexWidth, ++hexRef, colorRef += set)
+    {
+        // handle each corner
+        if (*hexRef & VERT_N)
+            ApplyStamp(pos, nTopVertStamp, colorRef + (3 * VERT_IND_N));
+        if (*hexRef & VERT_S)
+            ApplyStamp(pos, sVertStamp, colorRef + (3 * VERT_IND_S));
+    }
+
+    // Handle y wrap
+
+    if (wrapY)
+    {
+        pos = rowRef + rowJump;
+        hexRef -= width;
+        colorRef -= width * set;
+
+        uint8* basePos = imgBuf - rowJump + byteHexHalfWidth;
+        uint8* baseHexRef = buffer;
+        uint8* baseColorRef = bufferExtended;
+
+        for (uint32 x = 0; x < width; ++x,
+            pos += byteHexWidth, ++hexRef, colorRef += set,
+            basePos += byteHexWidth, ++baseHexRef, baseColorRef += set)
+        {
+            if (*baseHexRef & VERT_S)
+                ApplyStamp(pos, sVertStamp, baseColorRef + (3 * VERT_IND_S));
+            if (*hexRef & VERT_N)
+                ApplyStamp(basePos, nVertStamp, colorRef + (3 * VERT_IND_N));
+        }
+
+        // handle corner x wrap
+        if (wrapX)
+        {
+            basePos = imgBuf;
+
+            --hexRef;
+            colorRef -= set;
+            if (*hexRef & VERT_N)
+                ApplyStamp(basePos, swLeftVertStamp, colorRef + (3 * VERT_IND_N));
+
+            pos -= byteHexWidth + rowJump - byteHexHalfWidth;
+
+            baseHexRef = buffer;
+            baseColorRef = bufferExtended;
+            if (*baseHexRef & VERT_S)
+                ApplyStamp(pos, neRightVertStamp, baseColorRef + (3 * VERT_IND_S));
+        }
+    }
+
+    // Handle x wrap
+    if (wrapX)
+    {
+        uint32 dblWidth = width * 2;
+        uint32 dblWidthSet = dblWidth * set;
+        uint32 dblJump = rowJump * 2;
+
+        pos = imgBuf;
+        hexRef = buffer;
+        colorRef = bufferExtended;
+
+        uint8* posRight = imgBuf + rowJump + (byteHexWidth * (width - 1));
+        uint8* hexRefRight = buffer + dblWidth - 1;
+        uint8* colorRefRight = bufferExtended + dblWidthSet - set;
+
+        if (*hexRef & VERT_N)
+            ApplyStamp(posRight, seRightVertStamp, colorRef + (3 * VERT_IND_N));
+
+        hexRef += dblWidth;
+        colorRef += dblWidthSet;
+
+        for (uint32 h = 2; h < height; h += 2,
+            hexRef += dblWidth, colorRef += dblWidthSet,
+            hexRefRight += dblWidth, colorRefRight += dblWidthSet)
+        {
+            if (*hexRefRight & VERT_S)
+                ApplyStamp(pos, nwLeftVertStamp, colorRefRight + (3 * VERT_IND_S));
+            if (*hexRef & VERT_S)
+                ApplyStamp(posRight, neRightVertStamp, colorRef + (3 * VERT_IND_S));
+            pos += dblJump;
+            posRight += dblJump;
+            if (*hexRefRight & VERT_N)
+                ApplyStamp(pos, swLeftVertStamp, colorRefRight + (3 * VERT_IND_N));
+            if (*hexRef & VERT_N)
+                ApplyStamp(posRight, seRightVertStamp, colorRef + (3 * VERT_IND_N));
+        }
+
+        if (*hexRefRight & VERT_S)
+            ApplyStamp(pos, nwLeftVertStamp, colorRefRight + (3 * VERT_IND_S));
     }
 }
 
