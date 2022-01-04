@@ -3348,7 +3348,6 @@ void GenerateMap()
     AddStamps(gMap, sizeof *gMap, StampViaMapTile);
     AddEdges(gMap, sizeof *gMap, StampRiversViaMapTile, stampBlue);
     SaveMap("25_MapWRivers.bmp");
-    SaveToCiv6Map("ItsAMap", &details, gMap);
 
     // TODO: ? maybe not
     //AreaBuilder.Recalculate()
@@ -3374,6 +3373,11 @@ void GenerateMap()
         // TODO:
         //TerrainBuilder.GenerateFloodplains(true, iMinFloodplainSize, iMaxFloodplainSize);
     }
+
+    DrawHexes(gMap, sizeof * gMap, PaintMapTiles);
+    AddStamps(gMap, sizeof * gMap, StampViaMapTile);
+    AddEdges(gMap, sizeof * gMap, StampRiversViaMapTile, stampBlue);
+    SaveMap("26_MapWFeatures.bmp");
 
     //AddCliffs(plotTypes, terrainTypes);
 
@@ -3408,6 +3412,8 @@ void GenerateMap()
 
     //AddGoodies(dim.w, dim.h);
     //print("finished adding goodies")
+
+    SaveToCiv6Map("ItsAMap", &details, gMap);
 
     ExitImageWriter();
 }
@@ -4508,8 +4514,8 @@ void AddFeatures(ElevationMap* map, FloatMap* rainMap, FloatMap* tempMap)
                         plot->feature = fFOREST;
                 }
 
-                if (true)//TODO: CanHaveFeature(plot, tF
-                    plot->feature = fFLOODPLAINS;
+                //if (true)//TODO: CanHaveFeature(plot, tF
+                //    plot->feature = fFLOODPLAINS;
             }
         }
 
