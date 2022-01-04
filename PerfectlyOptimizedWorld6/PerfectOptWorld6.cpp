@@ -625,32 +625,166 @@ uint8 StampCliffsViaMapTile(void* data)
 uint8 StampVertTest(void* data, uint8 rgbOut[3 * 2])
 {
     rgbOut[0] = 0xFF;
-    rgbOut[1] = 0x00;
+    rgbOut[1] = 0xA5;
     rgbOut[2] = 0x00;
     rgbOut[3] = 0xFF;
-    rgbOut[4] = 0x00;
+    rgbOut[4] = 0xA5;
     rgbOut[5] = 0x00;
 
     return VERT_N | VERT_S;
 }
 
-uint8 StampFlow(void* data, uint8 rgbOut[3 * 2])
+RiverHex* riverRef;
+
+uint8 StampVertAltitude(void* data, uint8 rgbOut[3 * 2])
 {
     RiverHex* hex = (RiverHex*)data;
+    uint32 ind = hex - riverRef;
 
     uint8 out = 0;
 
-    out |= VERT_N;
-    rgbOut[0] = 0xFF * hex->northJunction.altitude;
-    rgbOut[1] = 0x00; //0xFF * (1 - hex->northJunction.altitude);
-    rgbOut[2] = 0x00;
-    out |= VERT_S;
-    rgbOut[3] = 0xFF * hex->southJunction.altitude;
-    rgbOut[4] = 0x00; //0xFF * (1 - hex->southJunction.altitude);
-    rgbOut[5] = 0x00;
+    if ((gMap + ind)->terrain != tOCEAN)
+    {
+        float64 na = hex->northJunction.altitude;
+        float64 sa = hex->southJunction.altitude;
+        //if (na > 2 || sa > 2)
+        //  printf("   %.3f - %.3f\n", na, sa);
+        na = na > 4.0 ? (((na - 4.0) / 6.0) * .1 + .9) : na > 0.5 ? (((na - .5) / 3.5) * .4 + .5) : na < 0.0 ? 0.0 : na;
+        sa = sa > 4.0 ? (((sa - 4.0) / 6.0) * .1 + .9) : sa > 0.5 ? (((sa - .5) / 3.5) * .4 + .5) : sa < 0.0 ? 0.0 : sa;
+
+        out |= VERT_N;
+        rgbOut[0] = 0xFF * na;
+        rgbOut[1] = 0xA5 * na;
+        rgbOut[2] = 0x00;
+        out |= VERT_S;
+        rgbOut[3] = 0xFF * sa;
+        rgbOut[4] = 0xA5 * sa;
+        rgbOut[5] = 0x00;
+    }
 
     return out;
 }
+
+uint8 StampVertFlowDir(void* data)
+{
+    RiverHex* hex = (RiverHex*)data;
+    uint32 ind = hex - riverRef;
+    uint32 x = ind % gSet.width;
+    uint32 y = ind / gSet.width;
+    uint32 odd = y % 2;
+    uint32 sWidth = gSet.width - 1;
+    uint32 sHeight = gSet.height - 1;
+
+    if ((gMap + ind)->terrain == tOCEAN)
+        return 0;
+
+    uint8 out = 0;
+
+    // TODO: handle wrap
+
+    if (odd)
+    {
+        // bot
+        //   south
+        if (y > 1)
+        {
+            RiverHex* b = hex - (gSet.width + gSet.width);
+            if (hex->southJunction.altitude < b->northJunction.altitude)
+                out |= FLOW_S_N;
+        }
+
+        //   left
+        RiverHex* bl = hex - gSet.width;
+        if (hex->southJunction.altitude < bl->northJunction.altitude)
+            out |= FLOW_SW_S;
+
+        //   right
+        if (x < sWidth)
+        {
+            RiverHex* br = bl + 1;
+            if (hex->southJunction.altitude < br->northJunction.altitude)
+                out |= FLOW_SE_S;
+        }
+
+        // top
+        if (y < sHeight)
+        {
+            //   left
+            RiverHex* tl = hex + gSet.width;
+            if (hex->northJunction.altitude < tl->southJunction.altitude)
+                out |= FLOW_NW_N;
+
+            if (x < sWidth)
+            {
+                RiverHex* tr = tl + 1;
+                if (hex->northJunction.altitude < tr->southJunction.altitude)
+                    out |= FLOW_NE_N;
+            }
+
+            if (y < sHeight - 1)
+            {
+                RiverHex* t = hex + (gSet.width + gSet.width);
+                if (hex->northJunction.altitude < t->southJunction.altitude)
+                    out |= FLOW_N_S;
+            }
+        }
+    }
+    else
+    {
+        // bot
+        if (y > 0)
+        {
+            //   south
+            if (y > 1)
+            {
+                RiverHex* b = hex - (gSet.width + gSet.width);
+                if (hex->southJunction.altitude < b->northJunction.altitude)
+                    out |= FLOW_S_N;
+            }
+
+            RiverHex* br = hex - gSet.width;
+
+            //   left
+            if (x > 0)
+            {
+                RiverHex* bl = br - 1;
+                if (hex->southJunction.altitude < bl->northJunction.altitude)
+                    out |= FLOW_SW_S;
+            }
+
+            //   right
+            if (hex->southJunction.altitude < br->northJunction.altitude)
+                out |= FLOW_SE_S;
+        }
+
+        // top
+        if (y < sHeight)
+        {
+            RiverHex* tr = hex + gSet.width;
+
+            //   left
+            if (x > 0)
+            {
+                RiverHex* tl = tr - 1;
+                if (hex->northJunction.altitude < tl->southJunction.altitude)
+                    out |= FLOW_NW_N;
+            }
+
+            if (hex->northJunction.altitude < tr->southJunction.altitude)
+                out |= FLOW_NE_N;
+
+            if (y < sHeight - 1)
+            {
+                RiverHex* t = hex + (gSet.width + gSet.width);
+                if (hex->northJunction.altitude < t->southJunction.altitude)
+                    out |= FLOW_N_S;
+            }
+        }
+    }
+
+    return out;
+}
+
 
 // --- Base Game Source Functions ---------------------------------------------
 
@@ -2098,7 +2232,7 @@ RiverHex* GetRiverHexNeighbor(RiverMap* map, RiverJunction* junc, bool westNeigh
     Coord c;
 
     c.y = junc->isNorth ? junc->coord.y + 1 : junc->coord.y - 1;
-    c.x = westNeighbor ? junc->coord.x + odd - 1 : junc->coord.y + odd;
+    c.x = westNeighbor ? junc->coord.x + odd - 1 : junc->coord.x + odd;
 
     uint32 i = GetIndex(&map->eMap->base, c);
     if (i != UINT32_MAX)
@@ -2371,7 +2505,9 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
     RiverHex* rivIt = map->riverData;
     float64* rainIt = rainfallMap;
 
-    AddVerts(map->riverData, sizeof * map->riverData, StampFlow);
+    riverRef = map->riverData;
+    AddVerts(map->riverData, sizeof * map->riverData, StampVertAltitude);
+    AddStampBits(map->riverData, sizeof * map->riverData, StampVertFlowDir, stampRed);
     SaveMap("24_MapFlow.bmp");
 
     for (; it < end; ++it, ++rivIt, ++rainIt)
@@ -2414,8 +2550,6 @@ void RecreateNewLakes(RiverMap* map, float64* rainfallMap)
                 ++gqInd;
                 GrowLake(map, nextLake, lakeSize, &ldu, lakeList, growthQueue);
             }
-            if (ldu.lakesAdded == 10)
-                bool bh = true;
             // process junctions for all lake% tiles
             // first find lowest junction
             RiverJunction* lowestJunction = &lakeList.front()->northJunction;
@@ -2634,7 +2768,7 @@ bool IsTouchingOcean(RiverMap* map, RiverJunction* junc)
     uint32 i = GetIndex(&map->eMap->base, junc->coord);
     MapTile* plot = gMap + i;
 
-    if (!junc || IsWater(plot))
+    if (IsWater(plot))
         return true;
 
     RiverHex* westNeighbor = GetRiverHexNeighbor(map, junc, true);
@@ -2733,7 +2867,7 @@ void SetRiverSizes(RiverMap* map, float64 * locRainfallMap)
 RiverJunction* GetNextJunctionInFlow(RiverMap* map, RiverJunction* junc)
 {
     // use outflow if valid
-    if (junc)
+    if (junc->outflow)
         return junc->outflow;
 
     return GetJunctionNeighbor(map, (FlowDir)junc->flow, junc);
@@ -2842,44 +2976,14 @@ void CreateRiverList(RiverMap* map)
 
     // TODO: this seems terribly unnecesary . . .
     currentRawID = 0;
-    it = map->riverData;
-    rIns = map->rivers;
-    // river sources in self.riverList again
-    for (; it < end; ++it)
-    {
-        if (IsRiverSource(map, &it->northJunction))
-        {
-            InitRiver(rIns, &it->northJunction, currentRawID);
-            ++rIns;
-            ++currentRawID;
-        }
-
-        if (IsRiverSource(map, &it->southJunction))
-        {
-            InitRiver(rIns, &it->southJunction, currentRawID);
-            ++rIns;
-            ++currentRawID;
-        }
-    }
-
-    // for this pass add to river list until rawID changes
     rIt = map->rivers;
     rEnd = rIns;
+    // river sources in self.riverList again
     for (; rIt < rEnd; ++rIt)
     {
-        RiverJunction* lastJunc = rIt->junctions.back();
-
-        for (; lastJunc->flow != fdNone;)
-        {
-            RiverJunction* nextJunc = GetJunctionNeighbor(map, (FlowDir)lastJunc->flow, lastJunc);
-            if (nextJunc && nextJunc->rawID == lastJunc->rawID)
-            {
-                Add(rIt, nextJunc);
-                lastJunc = nextJunc;
-            }
-            else
-                break;
-        }
+        uint32 id = rIt->junctions.front()->rawID;
+        while (rIt->junctions.back()->rawID != id)
+            rIt->junctions.pop_back();
     }
 
     // now strip out all the shorties
@@ -3243,7 +3347,6 @@ void GenerateMap()
     DrawHexes(gMap, sizeof *gMap, PaintMapTiles);
     AddStamps(gMap, sizeof *gMap, StampViaMapTile);
     AddEdges(gMap, sizeof *gMap, StampRiversViaMapTile, stampBlue);
-    AddVerts(gMap, sizeof *gMap, StampVertTest);
     SaveMap("25_MapWRivers.bmp");
     SaveToCiv6Map("ItsAMap", &details, gMap);
 
@@ -4446,6 +4549,7 @@ void AddRivers(RiverMap * map)
     uint8* checklist = (uint8*)calloc(map->eMap->base.length, sizeof uint8);
 
     for (; river < end; ++river)
+    {
         for (RiverJunction* junc : river->junctions)
             if (riverHex = GetRiverHexForJunction(map, junc))
             {
@@ -4478,6 +4582,7 @@ void AddRivers(RiverMap * map)
                     }
                 }
             }
+    }
 
     free(checklist);
 }

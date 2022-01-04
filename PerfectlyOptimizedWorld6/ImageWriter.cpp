@@ -943,7 +943,7 @@ void AddVerts(void* data, uint32 dataTypeByteWidth, FilterVertFn FilterFn)
         hexRef = buffer;
         colorRef = bufferExtended;
 
-        uint8* posRight = imgBuf + rowJump + (byteHexWidth * (width - 1));
+        uint8* posRight = imgBuf + rowJump + (byteHexWidth * (width - 1)) + byteHexHalfWidth;
         uint8* hexRefRight = buffer + dblWidth - 1;
         uint8* colorRefRight = bufferExtended + dblWidthSet - set;
 
@@ -972,6 +972,104 @@ void AddVerts(void* data, uint32 dataTypeByteWidth, FilterVertFn FilterFn)
         if (*hexRefRight & VERT_S)
             ApplyStamp(pos, nwLeftVertStamp, colorRefRight + (3 * VERT_IND_S));
     }
+}
+
+void AddStampBits(void* data, uint32 dataTypeByteWidth, FilterBitsFn FilterFn, uint8 const color[3])
+{
+    if (!data || !FilterFn)
+    {
+        printf("No data to write - data: %s - fn: %s\n",
+            data ? "exists" : "DNE", FilterFn ? "exists" : "DNE");
+        return;
+    }
+
+
+    // pre-convert pixels
+    uint8* it = buffer;
+    uint8* end = it + len;
+    uint8* src = (uint8*)data;
+
+    for (; it < end; ++it, src += dataTypeByteWidth)
+        *it = FilterFn(src);
+
+
+    // add stamps
+
+    uint8* hexRef = buffer;
+    uint8* rowRef = imgBuf;
+    uint32 rowJump = byteWidth * hexBodyCapHeight;
+    uint32 dblWidth = 2 * dataTypeByteWidth;
+
+    // Handle first row
+
+    uint8* pos = rowRef;
+
+    // handle non wrap
+    for (uint32 x = 0; x < width; ++x, pos += byteHexWidth, ++hexRef)
+    {
+        if (*hexRef & FLOW_SW_S)
+            ApplyStamp(pos, swsFlowStamp, color);
+        if (*hexRef & FLOW_SE_S)
+            ApplyStamp(pos, sesFlowStamp, color);
+        if (*hexRef & FLOW_NW_N)
+            ApplyStamp(pos, nwnFlowStamp, color);
+        if (*hexRef & FLOW_NE_N)
+            ApplyStamp(pos, nenFlowStamp, color);
+        if (*hexRef & FLOW_N_S)
+            ApplyStamp(pos, nsFlowStamp, color);
+    }
+
+    rowRef += rowJump;
+
+    // Handle body
+
+    uint32 sHeight = height - 1;
+
+    for (uint32 y = 1; y < sHeight; ++y)
+    {
+        pos = rowRef;
+        if (y % 2)
+            pos += byteHexHalfWidth;
+        uint32 diff = pos - imgBuf;
+
+        for (uint32 x = 0; x < width; ++x, pos += byteHexWidth, ++hexRef)
+        {
+            if (*hexRef & FLOW_S_N)
+                ApplyStamp(pos, snFlowStamp, color);
+            if (*hexRef & FLOW_SW_S)
+                ApplyStamp(pos, swsFlowStamp, color);
+            if (*hexRef & FLOW_SE_S)
+                ApplyStamp(pos, sesFlowStamp, color);
+            if (*hexRef & FLOW_NW_N)
+                ApplyStamp(pos, nwnFlowStamp, color);
+            if (*hexRef & FLOW_NE_N)
+                ApplyStamp(pos, nenFlowStamp, color);
+            if (*hexRef & FLOW_N_S)
+                ApplyStamp(pos, nsFlowStamp, color);
+        }
+
+        rowRef += rowJump;
+    }
+
+    // Handle last row
+    pos = rowRef + byteHexHalfWidth;
+
+    // handle non wrap
+    for (uint32 x = 0; x < width; ++x, pos += byteHexWidth, ++hexRef)
+    {
+        if (*hexRef & FLOW_S_N)
+            ApplyStamp(pos, snFlowStamp, color);
+        if (*hexRef & FLOW_SW_S)
+            ApplyStamp(pos, swsFlowStamp, color);
+        if (*hexRef & FLOW_SE_S)
+            ApplyStamp(pos, sesFlowStamp, color);
+        if (*hexRef & FLOW_NW_N)
+            ApplyStamp(pos, nwnFlowStamp, color);
+        if (*hexRef & FLOW_NE_N)
+            ApplyStamp(pos, nenFlowStamp, color);
+    }
+
+    // TODO: x and y wrap
 }
 
 void SaveMap(char const* filename)

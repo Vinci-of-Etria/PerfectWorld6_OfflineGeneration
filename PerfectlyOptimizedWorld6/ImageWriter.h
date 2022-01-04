@@ -480,11 +480,77 @@ static int8 const seRightVertStamp[] =
 #define VERT_S  (1 << VERT_IND_S )
 
 
+// Stamp sets
+
+static int8 const snFlowStamp[] =
+{
+    // y offset, rows
+    -4, 2,
+
+    2, 8, 9,
+    2, 8, 9,
+};
+
+static int8 const swsFlowStamp[] =
+{
+    // y offset, rows
+    1, 2,
+
+    2, 6, 7,
+    2, 6, 7,
+};
+
+static int8 const sesFlowStamp[] =
+{
+    // y offset, rows
+    1, 2,
+
+    2, 10, 11,
+    2, 10, 11,
+};
+
+static int8 const nwnFlowStamp[] =
+{
+    // y offset, rows
+    17, 2,
+
+    2, 6, 7,
+    2, 6, 7,
+};
+
+static int8 const nenFlowStamp[] =
+{
+    // y offset, rows
+    17, 2,
+
+    2, 10, 11,
+    2, 10, 11,
+};
+
+static int8 const nsFlowStamp[] =
+{
+    // y offset, rows
+    22, 2,
+
+    2, 8, 9,
+    2, 8, 9,
+};
+
+
+#define FLOW_S_N  (1 << 0)
+#define FLOW_SW_S (1 << 1)
+#define FLOW_SE_S (1 << 2)
+#define FLOW_NW_N (1 << 3)
+#define FLOW_NE_N (1 << 4)
+#define FLOW_N_S  (1 << 5)
+
+
 // Colors
 
 static uint8 const stampBlack[3]  = { 0x00, 0x00, 0x00 };
 static uint8 const stampBlue[3]   = { 0x00, 0xD1, 0xFF };
 static uint8 const stampOrange[3] = { 0xFF, 0xA1, 0x00 };
+static uint8 const stampRed[3]    = { 0xFF, 0x00, 0x00 };
 
 
 // Typedefs
@@ -493,6 +559,7 @@ typedef void(*FilterToBGRFn)(void*, uint8[3]);
 typedef StampSet(*FilterStampsFn)(void*);
 typedef uint8(*FilterEdgeFn)(void*);
 typedef uint8(*FilterVertFn)(void*, uint8[3*2]); // uint8
+typedef uint8(*FilterBitsFn)(void*);
 
 
 // Interface
@@ -505,5 +572,6 @@ void DrawHexes(void* data, uint32 dataTypeByteWidth, FilterToBGRFn FilterFn);
 void AddStamps(void* data, uint32 dataTypeByteWidth, FilterStampsFn FilterFn);
 void AddEdges(void* data, uint32 dataTypeByteWidth, FilterEdgeFn FilterFn, uint8 const color[3]);
 void AddVerts(void* data, uint32 dataTypeByteWidth, FilterVertFn FilterFn);
+void AddStampBits(void* data, uint32 dataTypeByteWidth, FilterBitsFn FilterFn, uint8 const color[3]);
 
 void SaveMap(char const* filename);
